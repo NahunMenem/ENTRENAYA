@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -29,11 +29,12 @@ class AuthService {
   Future<void>? _initialization;
 
   bool get isGoogleConfigured =>
-      _webClientId.isNotEmpty && (!Platform.isIOS || _iosClientId.isNotEmpty);
+      !kIsWeb && _webClientId.isNotEmpty &&
+      (defaultTargetPlatform != TargetPlatform.iOS || _iosClientId.isNotEmpty);
 
   Future<void> _initializeGoogle() {
     return _initialization ??= GoogleSignIn.instance.initialize(
-      clientId: Platform.isIOS ? _iosClientId : null,
+      clientId: !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS ? _iosClientId : null,
       serverClientId: _webClientId,
     );
   }

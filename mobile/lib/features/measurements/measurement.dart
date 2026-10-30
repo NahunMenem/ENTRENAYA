@@ -70,7 +70,7 @@ String measureDate(DateTime date) =>
 
 class MeasurementRepository {
   static const storageKey = 'entrenaya.measurements.v1';
-  final _preferences = SharedPreferencesAsync();
+  late final _preferences = SharedPreferencesAsync();
 
   Future<List<MeasurementEntry>> load() async {
     final raw = await _preferences.getString(storageKey);

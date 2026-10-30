@@ -22,6 +22,8 @@ flutter run \
 
 El backend predeterminado es `https://entrenaya-production.up.railway.app`.
 
+Para previsualizar en navegador, ejecutá `flutter pub get` y `flutter run -d chrome`. Después de agregar imágenes al pubspec o plugins nuevos, detené la ejecución por completo y volvé a iniciarla: hot reload no reconstruye el registro de plugins ni siempre incorpora los assets nuevos. La vista web usa el almacenamiento del navegador para los datos locales de esta demostración.
+
 ## Acceso temporal de demostración
 
 Por pedido del prototipo, `DEMO_MODE` está activado por defecto: Comenzar, Continuar con Google e Iniciá sesión abren el inicio directamente con un perfil local de demostración. Estos botones no autentican ni crean cuentas en el servidor. Para recuperar el flujo real de Google y el onboarding, ejecutá la app con `--dart-define=DEMO_MODE=false` y los clientes OAuth configurados.

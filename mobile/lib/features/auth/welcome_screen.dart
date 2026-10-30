@@ -145,6 +145,11 @@ class _WelcomePhoto extends StatelessWidget {
             fit: BoxFit.cover,
             alignment: Alignment.topCenter,
             semanticLabel: 'Dos atletas en un gimnasio',
+            errorBuilder: (context, error, stackTrace) => Container(
+              color: AppColors.surface,
+              alignment: Alignment.center,
+              child: Image.asset('assets/images/entrenaya_logo.png', width: 160),
+            ),
           ),
           const DecoratedBox(
             decoration: BoxDecoration(
