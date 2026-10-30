@@ -24,6 +24,11 @@ class AuthService:
 
     async def login_with_google(self, id_token: str) -> GoogleLoginResponse:
         settings = get_settings()
+        if not settings.google_client_id:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="El acceso con Google todavía no está configurado.",
+            )
         try:
             identity = await run_in_threadpool(
                 google_id_token.verify_oauth2_token,

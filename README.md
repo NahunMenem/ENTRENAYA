@@ -64,4 +64,4 @@ El healthcheck de Railway consulta `/health/ready`; esa ruta confirma que Postgr
 
 ## Alcance actual
 
-El backend valida la identidad de Google, crea o actualiza el usuario en PostgreSQL y emite tokens firmados por EntrenaYa. Todavía no implementa refresh tokens, cierre de sesión ni el onboarding del prototipo.
+El backend valida la identidad de Google, crea o actualiza el usuario en PostgreSQL y emite tokens firmados por EntrenaYa. Sin `GOOGLE_CLIENT_ID`, la API inicia normalmente, pero el endpoint de login devuelve `503` hasta configurar ese valor. Todavía no implementa refresh tokens, cierre de sesión ni el onboarding del prototipo.

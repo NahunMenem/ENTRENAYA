@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "EntrenaYa API"
     environment: str = "development"
-    google_client_id: str
+    google_client_id: str | None = None
     database_url: str
     jwt_secret_key: SecretStr
     access_token_expire_minutes: int = 60
@@ -24,10 +24,12 @@ class Settings(BaseSettings):
 
     @field_validator("google_client_id")
     @classmethod
-    def google_client_id_must_be_configured(cls, value: str) -> str:
+    def normalize_google_client_id(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
         value = value.strip()
         if not value or value == "your-client-id.apps.googleusercontent.com":
-            raise ValueError("Configurá GOOGLE_CLIENT_ID en el archivo .env.")
+            return None
         return value
 
     @field_validator("jwt_secret_key")
