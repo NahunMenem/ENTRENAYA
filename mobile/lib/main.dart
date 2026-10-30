@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/app_theme.dart';
 import 'core/models.dart';
@@ -19,6 +20,9 @@ class EntrenaYaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'EntrenaYa',
+      locale: const Locale('es', 'AR'),
+      supportedLocales: const [Locale('es', 'AR')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       home: const AppFlow(),

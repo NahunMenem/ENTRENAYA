@@ -7,6 +7,8 @@ environment:
   sdk: ^3.10.7
 
 dependencies:
+  flutter_localizations:
+    sdk: flutter
   flutter:
     sdk: flutter
   google_sign_in: ^7.2.0

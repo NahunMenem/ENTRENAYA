@@ -17,7 +17,8 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final _nameController = TextEditingController();
-  final _ageController = TextEditingController();
+  final _birthDateController = TextEditingController();
+  DateTime? _birthDate;
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
 
@@ -56,7 +57,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _ageController.dispose();
+    _birthDateController.dispose();
     _heightController.dispose();
     _weightController.dispose();
     super.dispose();
@@ -70,6 +71,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       return;
     }
     if (_step < 4) {
+      if (_step == 0 && _birthDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Seleccioná tu fecha de nacimiento.')),
+        );
+        return;
+      }
       setState(() => _step += 1);
       return;
     }
@@ -81,7 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         trainingPlace: _trainingPlace,
         daysPerWeek: _days,
         sessionMinutes: _minutes,
-        age: int.tryParse(_ageController.text),
+        birthDate: _birthDate,
         heightCm: double.tryParse(_heightController.text.replaceAll(',', '.')),
         weightKg: double.tryParse(_weightController.text.replaceAll(',', '.')),
       ),
@@ -210,13 +217,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           decoration: const InputDecoration(hintText: 'Tu nombre'),
         ),
         const SizedBox(height: 19),
-        Row(
-          children: [
-            Expanded(child: _numberField('EDAD', _ageController, '29', suffix: 'años')),
-            const SizedBox(width: 12),
-            Expanded(child: _numberField('ALTURA', _heightController, '170', suffix: 'cm')),
-          ],
+        _FieldLabel('FECHA DE NACIMIENTO'),
+        TextField(
+          controller: _birthDateController,
+          readOnly: true,
+          onTap: _selectBirthDate,
+          decoration: const InputDecoration(
+            hintText: 'DD/MM/AAAA',
+            suffixIcon: Icon(Icons.calendar_month_rounded),
+          ),
         ),
+        const SizedBox(height: 19),
+        _numberField('ALTURA', _heightController, '170', suffix: 'cm'),
         const SizedBox(height: 19),
         _numberField('PESO ACTUAL', _weightController, '70', suffix: 'kg', decimal: true),
         const SizedBox(height: 20),
@@ -226,6 +238,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _selectBirthDate() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime(2000, 1, 1),
+      firstDate: DateTime(1900),
+      lastDate: today.subtract(const Duration(days: 1)),
+      helpText: 'Tu fecha de nacimiento',
+      fieldLabelText: 'Fecha de nacimiento',
+      initialDatePickerMode: DatePickerMode.year,
+    );
+    if (!mounted || selected == null) return;
+    setState(() {
+      _birthDate = selected;
+      _birthDateController.text =
+          '${selected.day.toString().padLeft(2, '0')}/'
+          '${selected.month.toString().padLeft(2, '0')}/${selected.year}';
+    });
   }
 
   Widget _numberField(
