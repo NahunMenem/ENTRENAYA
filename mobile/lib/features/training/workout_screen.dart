@@ -54,7 +54,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     'API_BASE_URL',
     defaultValue: 'https://entrenaya-production.up.railway.app',
   );
-  final _preferences = SharedPreferencesAsync();
+  late final _preferences = SharedPreferencesAsync();
   final _series = List.generate(6, (_) => List.generate(4, (_) => _Series()));
   final _videos = <String, String>{};
   List<dynamic> _history = [];
@@ -68,6 +68,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   bool _catalogUnavailable = false;
   String? _storageError;
   int _exercise = 0;
+  final _seriesKeys = List.generate(
+    6,
+    (_) => List.generate(4, (_) => GlobalKey()),
+  );
 
   @override
   void initState() {
@@ -209,6 +213,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       row.completed = true;
       _restUntil = DateTime.now().add(const Duration(seconds: 90));
     });
+    _revealCurrentSeries();
     try {
       await _persist();
     } catch (_) {
@@ -307,30 +312,293 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     super.dispose();
   }
 
+  void _revealCurrentSeries() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final current = _series[_exercise].indexWhere((s) => !s.completed);
+      if (current < 0) return;
+      final context = _seriesKeys[_exercise][current].currentContext;
+      if (context != null) {
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 250),
+          alignment: 0.15,
+        );
+      }
+    });
+  }
+
+  Widget _seriesCard(int index, int current) {
+    final row = _series[_exercise][index];
+    final active = index == current;
+    final previous = _previous(index);
+    return Container(
+      key: _seriesKeys[_exercise][index],
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: active
+            ? AppColors.lime.withValues(alpha: 0.08)
+            : AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: active ? AppColors.lime : AppColors.line,
+          width: active ? 1.5 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (row.completed) ...[
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.lime,
+                  size: 18,
+                ),
+                const SizedBox(width: 7),
+              ],
+              Expanded(
+                child: Text(
+                  'Serie ${index + 1}',
+                  style: TextStyle(
+                    color: active ? AppColors.lime : Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              Text(
+                row.completed
+                    ? 'Guardada'
+                    : active
+                    ? 'Serie actual'
+                    : 'Pendiente',
+                style: TextStyle(
+                  color: active || row.completed
+                      ? AppColors.lime
+                      : AppColors.muted,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  key: ValueKey('${_exercise}_${index}_kg'),
+                  controller: row.weight,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  textInputAction: TextInputAction.next,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
+                    LengthLimitingTextInputFormatter(7),
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: 'Peso (kg)',
+                    hintText: 'Ingresá peso',
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
+                    hintStyle: TextStyle(color: AppColors.muted, fontSize: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 15,
+                    ),
+                  ),
+                  onChanged: (_) => _edited(),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  key: ValueKey('${_exercise}_${index}_reps'),
+                  controller: row.reps,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(3),
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: 'Repeticiones',
+                    hintText: 'Ingresá reps',
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
+                    hintStyle: TextStyle(color: AppColors.muted, fontSize: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 15,
+                    ),
+                  ),
+                  onChanged: (_) => _edited(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            previous == '—'
+                ? 'Sesión anterior: sin registros'
+                : 'Sesión anterior: $previous',
+            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _changeExercise(int offset) {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _exercise += offset;
+      _restUntil = null;
+    });
+    _edited();
+    _revealCurrentSeries();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final rows = _series[_exercise];
-    final current = rows.indexWhere((s) => !s.completed);
+    final current = _series[_exercise].indexWhere((s) => !s.completed);
     final remaining = _restUntil?.difference(DateTime.now()) ?? Duration.zero;
+    final resting = remaining > Duration.zero;
+    final blocked = _saving || _storageError != null;
     return Scaffold(
       appBar: AppBar(
         title: const Text('PECHO Y TRÍCEPS', style: TextStyle(fontSize: 12)),
         actions: [
           TextButton(
-            onPressed: _loading || _saving || _storageError != null
-                ? null
-                : _finish,
+            onPressed: _loading || blocked ? null : _finish,
             child: Text(_saving ? 'Guardando…' : 'Finalizar'),
           ),
         ],
       ),
+      bottomNavigationBar: _loading
+          ? null
+          : SafeArea(
+              top: false,
+              child: AbsorbPointer(
+                absorbing: blocked,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (resting) ...[
+                        SurfaceCard(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.timer_outlined,
+                                color: AppColors.lime,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Descanso ${_clock(remaining)}',
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    setState(() => _restUntil = null),
+                                child: const Text(
+                                  'Omitir descanso',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: FilledButton.icon(
+                          onPressed: current < 0 || resting
+                              ? null
+                              : _completeSet,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.lime,
+                            foregroundColor: AppColors.background,
+                            disabledBackgroundColor: AppColors.surfaceRaised,
+                            disabledForegroundColor: AppColors.muted,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(17),
+                            ),
+                          ),
+                          icon: Icon(
+                            current < 0
+                                ? Icons.check_circle_outline
+                                : resting
+                                ? Icons.timer_outlined
+                                : Icons.check_rounded,
+                            size: 20,
+                          ),
+                          label: Text(
+                            current < 0
+                                ? 'Ejercicio completado'
+                                : resting
+                                ? 'Descansando…'
+                                : 'Guardar serie ${current + 1} e iniciar descanso',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: _exercise == 0
+                                  ? null
+                                  : () => _changeExercise(-1),
+                              child: const Text(
+                                '← Ejercicio anterior',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: TextButton(
+                              onPressed: _exercise == 5
+                                  ? null
+                                  : () => _changeExercise(1),
+                              child: const Text(
+                                'Siguiente ejercicio →',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : AbsorbPointer(
-              absorbing: _saving || _storageError != null,
+              absorbing: blocked,
               child: SafeArea(
+                bottom: false,
                 child: ListView(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                   children: [
                     if (_storageError != null)
                       Padding(
@@ -342,7 +610,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       ),
                     const Text(
                       'Tiempo entrenando',
-                      style: TextStyle(color: AppColors.muted),
+                      style: TextStyle(color: AppColors.muted, fontSize: 12),
                     ),
                     Text(
                       _clock(DateTime.now().difference(_started)),
@@ -351,9 +619,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 22),
                     Text(
-                      'EJERCICIO ${_exercise + 1} DE 6 · ${current < 0 ? '4 SERIES LISTAS' : 'SERIE ${current + 1} DE 4'}',
+                      'EJERCICIO ${_exercise + 1} DE 6 · ${current < 0 ? '4 SERIES GUARDADAS' : 'SERIE ${current + 1} DE 4'}',
                       style: const TextStyle(
                         color: AppColors.lime,
                         fontSize: 11,
@@ -377,197 +645,23 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       ),
                     ),
                     const Text(
-                      'Ingresá la carga y las repeticiones de cada serie. Usá 0 kg para peso corporal.',
+                      'Cargá el peso y las repeticiones de la serie actual. Después guardala para iniciar el descanso.',
+                      style: TextStyle(color: AppColors.muted, fontSize: 13),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Si usás solo tu peso corporal, ingresá 0 kg.',
                       style: TextStyle(color: AppColors.muted, fontSize: 12),
                     ),
-                    const SizedBox(height: 16),
-                    SurfaceCard(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        children: [
-                          const Row(
-                            children: [
-                              SizedBox(
-                                width: 34,
-                                child: Text(
-                                  'Serie',
-                                  style: TextStyle(fontSize: 10),
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  'Kilos',
-                                  style: TextStyle(fontSize: 10),
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Reps',
-                                  style: TextStyle(fontSize: 10),
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              SizedBox(
-                                width: 75,
-                                child: Text(
-                                  'Última vez',
-                                  style: TextStyle(fontSize: 10),
-                                ),
-                              ),
-                            ],
-                          ),
-                          for (var index = 0; index < 4; index++)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 12),
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: 34,
-                                    child: rows[index].completed
-                                        ? const Icon(
-                                            Icons.check_circle,
-                                            color: AppColors.lime,
-                                            size: 20,
-                                          )
-                                        : Text(
-                                            '${index + 1}',
-                                            style: TextStyle(
-                                              color: index == current
-                                                  ? AppColors.lime
-                                                  : null,
-                                            ),
-                                          ),
-                                  ),
-                                  Expanded(
-                                    child: TextField(
-                                      key: ValueKey('${_exercise}_${index}_kg'),
-                                      controller: rows[index].weight,
-                                      keyboardType:
-                                          const TextInputType.numberWithOptions(
-                                            decimal: true,
-                                          ),
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.allow(
-                                          RegExp(r'[0-9,.]'),
-                                        ),
-                                        LengthLimitingTextInputFormatter(7),
-                                      ],
-                                      decoration: InputDecoration(
-                                        hintText: '0',
-                                        isDense: true,
-                                        contentPadding: const EdgeInsets.all(
-                                          10,
-                                        ),
-                                        semanticCounterText:
-                                            'Kilos serie ${index + 1}',
-                                      ),
-                                      onChanged: (_) => _edited(),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: TextField(
-                                      key: ValueKey(
-                                        '${_exercise}_${index}_reps',
-                                      ),
-                                      controller: rows[index].reps,
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                        LengthLimitingTextInputFormatter(3),
-                                      ],
-                                      decoration: InputDecoration(
-                                        hintText: '12',
-                                        isDense: true,
-                                        contentPadding: const EdgeInsets.all(
-                                          10,
-                                        ),
-                                        semanticCounterText:
-                                            'Repeticiones serie ${index + 1}',
-                                      ),
-                                      onChanged: (_) => _edited(),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  SizedBox(
-                                    width: 75,
-                                    child: Text(
-                                      _previous(index),
-                                      style: const TextStyle(
-                                        color: AppColors.muted,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    if (remaining > Duration.zero) ...[
-                      SurfaceCard(
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.timer_outlined,
-                              color: AppColors.lime,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text('DESCANSO ${_clock(remaining)}'),
-                            ),
-                            TextButton(
-                              onPressed: () =>
-                                  setState(() => _restUntil = null),
-                              child: const Text('Omitir'),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    LimeButton(
-                      label: current < 0
-                          ? 'Ejercicio completado'
-                          : 'Completar serie ${current + 1}',
-                      icon: Icons.check_rounded,
-                      onPressed: current < 0 ? null : _completeSet,
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    const SizedBox(height: 18),
+                    Column(
                       children: [
-                        TextButton(
-                          onPressed: _exercise == 0
-                              ? null
-                              : () {
-                                  setState(() {
-                                    _exercise--;
-                                    _restUntil = null;
-                                  });
-                                  _edited();
-                                },
-                          child: const Text('← Anterior'),
-                        ),
-                        TextButton(
-                          onPressed: _exercise == 5
-                              ? null
-                              : () {
-                                  setState(() {
-                                    _exercise++;
-                                    _restUntil = null;
-                                  });
-                                  _edited();
-                                },
-                          child: const Text('Siguiente →'),
-                        ),
+                        for (var index = 0; index < 4; index++)
+                          _seriesCard(index, current),
                       ],
                     ),
                     const Text(
-                      'Tus series se guardan en este teléfono. Podés cerrar y retomar el entrenamiento.',
+                      'Tus series se guardan en este dispositivo. Podés cerrar y retomar el entrenamiento.',
                       style: TextStyle(color: AppColors.muted, fontSize: 11),
                     ),
                   ],

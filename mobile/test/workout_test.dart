@@ -32,7 +32,7 @@ void main() {
   testWidgets(
     'records each set, skips only rest, restores draft and shows previous session',
     (tester) async {
-      tester.view.physicalSize = const Size(430, 1000);
+      tester.view.physicalSize = const Size(393, 852);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -42,13 +42,28 @@ void main() {
           MaterialApp(theme: AppTheme.dark, home: const WorkoutScreen());
       await tester.pumpWidget(app());
       await tester.pumpAndSettle();
+      expect(find.text('Serie actual'), findsOneWidget);
+      final emptyWeight = tester.widget<TextField>(
+        find.byKey(const ValueKey('0_0_kg')),
+      );
+      expect(emptyWeight.controller!.text, isEmpty);
+      expect(emptyWeight.decoration!.hintText, 'Ingresá peso');
+      final emptyReps = tester.widget<TextField>(
+        find.byKey(const ValueKey('0_0_reps')),
+      );
+      expect(emptyReps.controller!.text, isEmpty);
+      expect(emptyReps.decoration!.hintText, 'Ingresá reps');
       await tester.enterText(find.byKey(const ValueKey('0_0_kg')), '42,5');
       await tester.enterText(find.byKey(const ValueKey('0_0_reps')), '10');
-      await tester.ensureVisible(find.text('Completar serie 1'));
-      await tester.tap(find.text('Completar serie 1'));
+      await tester.ensureVisible(
+        find.text('Guardar serie 1 e iniciar descanso'),
+      );
+      await tester.tap(find.text('Guardar serie 1 e iniciar descanso'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Omitir'));
-      await tester.tap(find.text('Omitir'));
+      expect(find.text('Descansando…'), findsOneWidget);
+      expect(find.text('Guardada'), findsOneWidget);
+      await tester.ensureVisible(find.text('Omitir descanso'));
+      await tester.tap(find.text('Omitir descanso'));
       await tester.pumpAndSettle();
       var saved =
           jsonDecode(storage.values['entrenaya.workouts.v1']!)
@@ -80,7 +95,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(app());
       await tester.pumpAndSettle();
-      expect(find.text('42,5 kg × 10'), findsOneWidget);
+      expect(find.text('Sesión anterior: 42,5 kg × 10'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     },
   );
