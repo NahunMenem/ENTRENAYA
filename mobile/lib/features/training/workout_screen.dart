@@ -9,9 +9,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/app_theme.dart';
 import '../../core/widgets.dart';
 import 'exercise_video.dart';
+import '../routines/routine.dart';
 
 class WorkoutScreen extends StatefulWidget {
-  const WorkoutScreen({super.key});
+  const WorkoutScreen({super.key, this.routine});
+  final TrainingRoutine? routine;
 
   @override
   State<WorkoutScreen> createState() => _WorkoutScreenState();
@@ -41,7 +43,7 @@ class _Series {
 }
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
-  static const _catalog = [
+  static const _defaultCatalog = [
     ('press-banca', 'Press de banca'),
     ('aperturas-mancuernas', 'Aperturas con mancuernas'),
     ('press-inclinado', 'Press inclinado'),
@@ -49,33 +51,47 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     ('fondos-banco', 'Fondos en banco'),
     ('extension-triceps', 'Extensión de tríceps'),
   ];
-  static const _storageKey = 'entrenaya.workouts.v1';
+  String get _storageKey => widget.routine == null
+      ? 'entrenaya.workouts.v1'
+      : 'entrenaya.workouts.routine.${widget.routine!.id}';
+  late final List<RoutineExercise> _plan;
+  late final List<(String, String)> _catalog;
   static const _api = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'https://entrenaya-production.up.railway.app',
   );
   late final _preferences = SharedPreferencesAsync();
-  final _series = List.generate(6, (_) => List.generate(4, (_) => _Series()));
+  late final List<List<_Series>> _series;
   final _videos = <String, String>{};
   List<dynamic> _history = [];
   DateTime _started = DateTime.now();
   DateTime? _restUntil;
   Timer? _timer;
-  static Future<void> _writes = Future.value();
+  static Future<void>? _writes;
   bool _loading = true;
   bool _saving = false;
   bool _loadingVideo = false;
   bool _catalogUnavailable = false;
   String? _storageError;
   int _exercise = 0;
-  final _seriesKeys = List.generate(
-    6,
-    (_) => List.generate(4, (_) => GlobalKey()),
-  );
+  final _scrollController = ScrollController();
+  late final List<List<GlobalKey>> _seriesKeys;
 
   @override
   void initState() {
     super.initState();
+    _plan =
+        widget.routine?.exercises ??
+        _defaultCatalog
+            .map((e) => RoutineExercise(id: e.$1, name: e.$2, sets: 4))
+            .toList();
+    _catalog = _plan.map((e) => (e.id, e.name)).toList();
+    _series = _plan
+        .map((e) => List.generate(e.sets, (_) => _Series()))
+        .toList();
+    _seriesKeys = _plan
+        .map((e) => List.generate(e.sets, (_) => GlobalKey()))
+        .toList();
     _load();
     _loadVideos();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -94,11 +110,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         final draft = data['draft'] as Map<String, dynamic>?;
         if (draft != null) {
           _started = DateTime.parse(draft['started_at'] as String);
-          _exercise = (draft['exercise'] as int? ?? 0).clamp(0, 5);
+          _exercise = (draft['exercise'] as int? ?? 0).clamp(
+            0,
+            _catalog.length - 1,
+          );
           final saved = draft['exercises'] as Map<String, dynamic>;
           for (var e = 0; e < _catalog.length; e++) {
             final rows = saved[_catalog[e].$1] as List<dynamic>? ?? [];
-            for (var s = 0; s < rows.length && s < 4; s++) {
+            for (var s = 0; s < rows.length && s < _series[e].length; s++) {
               _series[e][s].restore(rows[s] as Map<String, dynamic>);
             }
           }
@@ -157,7 +176,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       'draft': finish ? null : draft,
     });
     // Serialize writes so rapid edits cannot overwrite newer values.
-    final write = _writes.then(
+    final write = (_writes ?? Future<void>.value()).then(
       (_) => _preferences.setString(_storageKey, encoded),
     );
     _writes = write.catchError((Object error) {
@@ -167,6 +186,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               'No pudimos guardar los cambios en este teléfono.',
         );
       }
+    });
+    final pending = _writes;
+    pending!.then((_) {
+      if (identical(_writes, pending)) _writes = null;
     });
     return write;
   }
@@ -211,7 +234,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     FocusScope.of(context).unfocus();
     setState(() {
       row.completed = true;
-      _restUntil = DateTime.now().add(const Duration(seconds: 90));
+      _restUntil = DateTime.now().add(
+        Duration(seconds: _plan[_exercise].restSeconds),
+      );
     });
     _revealCurrentSeries();
     try {
@@ -306,6 +331,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _scrollController.dispose();
     for (final row in _series.expand((rows) => rows)) {
       row.dispose();
     }
@@ -457,7 +483,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       _restUntil = null;
     });
     _edited();
-    _revealCurrentSeries();
+    if (_scrollController.hasClients) _scrollController.jumpTo(0);
   }
 
   @override
@@ -468,7 +494,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     final blocked = _saving || _storageError != null;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PECHO Y TRÍCEPS', style: TextStyle(fontSize: 12)),
+        title: Text(
+          widget.routine?.name ?? 'PECHO Y TRÍCEPS',
+          style: const TextStyle(fontSize: 12),
+        ),
         actions: [
           TextButton(
             onPressed: _loading || blocked ? null : _finish,
@@ -549,7 +578,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                                 ? 'Ejercicio completado'
                                 : resting
                                 ? 'Descansando…'
-                                : 'Guardar serie ${current + 1} e iniciar descanso',
+                                : 'Guardar serie ${current + 1}${_plan[_exercise].restSeconds == 0 ? '' : ' e iniciar descanso'}',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontFamily: 'Roboto',
@@ -575,7 +604,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                           ),
                           Expanded(
                             child: TextButton(
-                              onPressed: _exercise == 5
+                              onPressed: _exercise == _catalog.length - 1
                                   ? null
                                   : () => _changeExercise(1),
                               child: const Text(
@@ -598,6 +627,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               child: SafeArea(
                 bottom: false,
                 child: ListView(
+                  controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                   children: [
                     if (_storageError != null)
@@ -621,7 +651,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     ),
                     const SizedBox(height: 22),
                     Text(
-                      'EJERCICIO ${_exercise + 1} DE 6 · ${current < 0 ? '4 SERIES GUARDADAS' : 'SERIE ${current + 1} DE 4'}',
+                      'EJERCICIO ${_exercise + 1} DE ${_catalog.length} · ${current < 0 ? '${_series[_exercise].length} SERIES GUARDADAS' : 'SERIE ${current + 1} DE ${_series[_exercise].length}'}',
                       style: const TextStyle(
                         color: AppColors.lime,
                         fontSize: 11,
@@ -653,10 +683,22 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       'Si usás solo tu peso corporal, ingresá 0 kg.',
                       style: TextStyle(color: AppColors.muted, fontSize: 12),
                     ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Objetivo: ${_plan[_exercise].reps} repeticiones por serie · ${_plan[_exercise].restSeconds} s de descanso',
+                      style: const TextStyle(
+                        color: AppColors.lime,
+                        fontSize: 12,
+                      ),
+                    ),
                     const SizedBox(height: 18),
                     Column(
                       children: [
-                        for (var index = 0; index < 4; index++)
+                        for (
+                          var index = 0;
+                          index < _series[_exercise].length;
+                          index++
+                        )
                           _seriesCard(index, current),
                       ],
                     ),

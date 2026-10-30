@@ -48,6 +48,12 @@ En Progreso → Medidas se pueden guardar registros con fecha de brazo izquierdo
 
 En Progreso → Registrar peso se puede registrar el peso corporal en kilogramos, con fecha, historial, edición y eliminación. La vista de peso muestra el gráfico y diferencias desde el primer registro y respecto al anterior. Mi progreso muestra el último peso y su evolución real; no usa los valores de ejemplo del prototipo. El historial de medidas existente se conserva. El peso se guarda en este dispositivo, sin sincronización con PostgreSQL todavía.
 
+## Rutinas personales
+
+En Entrenar → Crear mi rutina podés elegir un nombre y varios días de la semana. La biblioteca incluye ejercicios agrupados por músculo y búsqueda por nombre; se combina con el catálogo del backend cuando hay conexión. Cada ejercicio admite series, repeticiones objetivo y descanso en segundos. Podés cambiar el orden, quitar ejercicios y editar o eliminar rutinas guardadas. El filtro semanal muestra las rutinas asignadas a cada día.
+
+Entrenar esta rutina abre el registro de series con los ejercicios, el orden y los descansos que configuraste. Las repeticiones son un objetivo; las repeticiones y el peso que efectivamente hiciste se ingresan al entrenar. Las rutinas y sus borradores de entrenamiento se guardan localmente en el dispositivo; todavía no se sincronizan con PostgreSQL.
+
 ## Videos de técnica
 
 La app consulta `GET /api/v1/exercises` para obtener el `video_url` de cada ejercicio y lo reproduce dentro de la app con controles de reproducción y avance. El backend prepara una tabla `exercises` con identificador, nombre y URL de video. El futuro panel administrador deberá guardar en ella una URL HTTPS de reproducción directa (por ejemplo, MP4 alojado en almacenamiento de archivos), no un enlace a una página de YouTube. Los identificadores del catálogo deben mantenerse estables para conservar el historial de cada ejercicio.
