@@ -6,8 +6,9 @@ import '../../core/widgets.dart';
 import 'measurement.dart';
 
 class MeasurementForm extends StatefulWidget {
-  const MeasurementForm({super.key, this.entry});
+  const MeasurementForm({super.key, this.entry, this.weightOnly = false});
   final MeasurementEntry? entry;
+  final bool weightOnly;
 
   @override
   State<MeasurementForm> createState() => _MeasurementFormState();
@@ -24,7 +25,7 @@ class _MeasurementFormState extends State<MeasurementForm> {
     final now = DateTime.now();
     _date = widget.entry?.date ?? DateTime(now.year, now.month, now.day);
     _controllers = {
-      for (final metric in BodyMeasure.values)
+      for (final metric in trackedMetrics(widget.weightOnly))
         metric: TextEditingController(
           text: widget.entry?.values[metric] == null
               ? ''
@@ -64,9 +65,20 @@ class _MeasurementFormState extends State<MeasurementForm> {
     }
     if (values.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingresá al menos una medida.')),
+        SnackBar(
+          content: Text(
+            widget.weightOnly
+                ? 'Ingresá tu peso.'
+                : 'Ingresá al menos una medida.',
+          ),
+        ),
       );
       return;
+    }
+    // Preserve any other measurements attached to the same record.
+    for (final item
+        in widget.entry?.values.entries ?? <MapEntry<BodyMeasure, double>>[]) {
+      if (!_controllers.containsKey(item.key)) values[item.key] = item.value;
     }
     Navigator.pop(
       context,
@@ -84,7 +96,9 @@ class _MeasurementFormState extends State<MeasurementForm> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Text(
-        widget.entry == null ? 'Registrar medidas' : 'Editar medidas',
+        widget.entry == null
+            ? (widget.weightOnly ? 'Registrar peso' : 'Registrar medidas')
+            : (widget.weightOnly ? 'Editar peso' : 'Editar medidas'),
       ),
     ),
     body: SafeArea(
@@ -93,8 +107,10 @@ class _MeasurementFormState extends State<MeasurementForm> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            const Text(
-              'Todas las medidas en centímetros. Podés completar solo las que quieras registrar.',
+            Text(
+              widget.weightOnly
+                  ? 'Registrá tu peso en kilogramos y la fecha para seguir tu evolución.'
+                  : 'Todas las medidas en centímetros. Podés completar solo las que quieras registrar.',
               style: TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: 16),
@@ -104,7 +120,7 @@ class _MeasurementFormState extends State<MeasurementForm> {
               label: Text('Fecha: ${measureDate(_date)}'),
             ),
             const SizedBox(height: 16),
-            for (final metric in BodyMeasure.values)
+            for (final metric in trackedMetrics(widget.weightOnly))
               Padding(
                 padding: const EdgeInsets.only(bottom: 18),
                 child: TextFormField(
@@ -120,8 +136,8 @@ class _MeasurementFormState extends State<MeasurementForm> {
                   ],
                   decoration: InputDecoration(
                     labelText: metric.label,
-                    suffixText: 'cm',
-                    hintText: 'Ej.: 35,5',
+                    suffixText: metric.unit,
+                    hintText: widget.weightOnly ? 'Ej.: 82,4' : 'Ej.: 35,5',
                   ),
                   validator: (raw) {
                     if (raw == null || raw.trim().isEmpty) return null;
@@ -131,20 +147,24 @@ class _MeasurementFormState extends State<MeasurementForm> {
                         value == null ||
                         !value.isFinite ||
                         value <= 0 ||
-                        value > 400) {
-                      return 'Ingresá un valor entre 0 y 400 cm, mayor que 0.';
+                        value > (widget.weightOnly ? 1000 : 400)) {
+                      return widget.weightOnly
+                          ? 'Ingresá un peso mayor que 0 y de hasta 1000 kg.'
+                          : 'Ingresá un valor entre 0 y 400 cm, mayor que 0.';
                     }
                     return null;
                   },
                 ),
               ),
-            const Text(
-              'Para comparar mejor, usá siempre la misma referencia y postura. En espalda, registrá el contorno del torso a la altura que elijas y mantené ese criterio.',
+            Text(
+              widget.weightOnly
+                  ? 'Para comparar tus registros, pesate en condiciones similares y con la misma balanza.'
+                  : 'Para comparar mejor, usá siempre la misma referencia y postura. En espalda, registrá el contorno del torso a la altura que elijas y mantené ese criterio.',
               style: TextStyle(color: AppColors.muted, fontSize: 12),
             ),
             const SizedBox(height: 24),
             LimeButton(
-              label: 'Guardar medidas',
+              label: widget.weightOnly ? 'Guardar peso' : 'Guardar medidas',
               icon: Icons.check_rounded,
               onPressed: _submit,
             ),

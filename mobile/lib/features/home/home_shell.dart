@@ -7,6 +7,7 @@ import '../../core/models.dart';
 import '../../core/widgets.dart';
 import '../training/workout_screen.dart';
 import '../measurements/measurements_screen.dart';
+import '../measurements/measurement.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, required this.profile, required this.onSignOut});
@@ -637,131 +638,84 @@ class _TrainingLink extends StatelessWidget {
       );
 }
 
-class _ProgressTab extends StatelessWidget {
+class _ProgressTab extends StatefulWidget {
   const _ProgressTab();
+  @override
+  State<_ProgressTab> createState() => _ProgressTabState();
+}
+
+class _ProgressTabState extends State<_ProgressTab> {
+  final _repository = MeasurementRepository();
+  List<MeasurementEntry> _weight = [];
+  bool _loading = true;
+  bool _failed = false;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    try {
+      final entries = await _repository.load();
+      if (!mounted) return;
+      setState(() { _weight = measurementsFor(entries, BodyMeasure.weight); _failed = false; });
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _openWeight() async {
+    await Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const MeasurementsScreen(weightOnly: true)));
+    if (mounted) await _load();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 25),
-      children: [
-        const SectionHeading(title: 'Mi progreso', subtitle: 'Tu evolución, en datos que motivan.'),
-        const SizedBox(height: 17),
-        const Row(
-          children: [
-            Expanded(child: _MetricCard(value: '82,4 kg', label: 'Peso actual', change: '−1,8 kg')),
-            SizedBox(width: 10),
-            Expanded(child: _MetricCard(value: '14', label: 'Entrenos/mes', change: '+3')),
-          ],
-        ),
-        const SizedBox(height: 10),
-        const Row(
-          children: [
-            Expanded(child: _MetricCard(value: '8 días', label: 'Racha actual', change: 'récord', changeColor: AppColors.orange)),
-            SizedBox(width: 10),
-            Expanded(child: _MetricCard(value: '12%', label: 'Volumen', change: 'este mes')),
-          ],
-        ),
+    final latest = _weight.isEmpty ? null : _weight.last.values[BodyMeasure.weight]!;
+    final initial = _weight.isEmpty ? null : _weight.first.values[BodyMeasure.weight]!;
+    final change = latest == null || initial == null ? null : latest - initial;
+    return ListView(padding: const EdgeInsets.fromLTRB(20, 18, 20, 25), children: [
+      const SectionHeading(title: 'Mi progreso', subtitle: 'Tu evolución, registro a registro.'),
+      const SizedBox(height: 18),
+      SurfaceCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Peso corporal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
         const SizedBox(height: 12),
-        SurfaceCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [const Expanded(child: Text('Evolución del peso corporal', style: TextStyle(fontWeight: FontWeight.w800))), const Text('−1,8 kg', style: TextStyle(color: AppColors.blue, fontWeight: FontWeight.w800))]),
-              const SizedBox(height: 12),
-              const Row(
-                children: [
-                  _PeriodChip('7 días'),
-                  _PeriodChip('30 días', selected: true),
-                  _PeriodChip('3 meses'),
-                  _PeriodChip('6 meses'),
-                  _PeriodChip('1 año'),
-                ],
-              ),
-              const SizedBox(height: 13),
-              const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Inicial 84,2 kg', style: TextStyle(color: AppColors.muted, fontSize: 9)), Text('Actual 82,4 kg', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800)), Text('Objetivo 80 kg', style: TextStyle(color: AppColors.lime, fontSize: 9))]),
-              const SizedBox(height: 9),
-              const SizedBox(height: 135, child: _WeightChart()),
-              const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('18 sep', style: TextStyle(color: AppColors.muted, fontSize: 9)), Text('27 sep', style: TextStyle(color: AppColors.muted, fontSize: 9)), Text('6 oct', style: TextStyle(color: AppColors.muted, fontSize: 9)), Text('15 oct', style: TextStyle(color: AppColors.muted, fontSize: 9))]),
-            ],
-          ),
-        ),
-        const SizedBox(height: 11),
-        Row(
-          children: [
-            Expanded(child: _ProgressTile(icon: Icons.straighten_rounded, title: 'Medidas', detail: 'Historial y evolución', onTap: () => _openMeasurements(context))),
-            const SizedBox(width: 10),
-            const Expanded(child: _ProgressTile(icon: Icons.photo_library_outlined, title: 'Fotos', detail: 'Antes / Después')),
-          ],
-        ),
-        const SizedBox(height: 14),
-        LimeButton(label: 'Registrar medidas', icon: Icons.add_rounded, onPressed: () => _openMeasurements(context)),
-      ],
-    );
+        if (_loading) const Center(child: CircularProgressIndicator())
+        else if (_failed) ...[
+          const Text('No pudimos leer tu historial de peso.'),
+          TextButton(onPressed: _load, child: const Text('Reintentar')),
+        ] else if (latest == null)
+          const Text('Registrá tu peso para empezar a ver tu evolución.', style: TextStyle(color: AppColors.muted))
+        else ...[
+          Text('${measureNumber(latest)} kg', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.lime)),
+          Text('Último registro: ${measureDate(_weight.last.date)}', style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+          const SizedBox(height: 12),
+          if (_weight.length > 1) ...[
+            Text('${change! > 0 ? '+' : ''}${measureNumber(change)} kg desde el primer registro'),
+            const SizedBox(height: 16),
+            Semantics(label: 'Evolución del peso corporal. Inicial ${measureNumber(initial!)} kilos, actual ${measureNumber(latest)} kilos.',
+              child: SizedBox(height: 140, width: double.infinity,
+                child: CustomPaint(painter: MeasurementTrendChart(_weight, BodyMeasure.weight)))),
+            const SizedBox(height: 8),
+            Wrap(spacing: 20, runSpacing: 4, children: [
+              Text('Inicial: ${measureDate(_weight.first.date)}', style: const TextStyle(color: AppColors.muted, fontSize: 11)),
+              Text('Actual: ${measureDate(_weight.last.date)}', style: const TextStyle(color: AppColors.muted, fontSize: 11)),
+            ]),
+          ] else const Text('Con el próximo registro vas a poder comparar los cambios.', style: TextStyle(color: AppColors.muted, fontSize: 12)),
+        ],
+        const SizedBox(height: 18),
+        LimeButton(label: 'Registrar peso', icon: Icons.monitor_weight_outlined, onPressed: _openWeight),
+        Center(child: TextButton(onPressed: _openWeight, child: const Text('Ver historial de peso'))),
+      ])),
+      const SizedBox(height: 16),
+      _ProgressTile(icon: Icons.straighten_rounded, title: 'Medidas corporales', detail: 'Brazos, piernas, cintura y espalda · historial y evolución', onTap: () => _openMeasurements(context)),
+      const SizedBox(height: 12),
+      LimeButton(label: 'Registrar medidas', icon: Icons.add_rounded, onPressed: () => _openMeasurements(context)),
+      const SizedBox(height: 16),
+      const Text('Tus registros se guardan en este dispositivo.', style: TextStyle(color: AppColors.muted, fontSize: 11)),
+    ]);
   }
-}
-
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({required this.value, required this.label, required this.change, this.changeColor = AppColors.lime});
-  final String value;
-  final String label;
-  final String change;
-  final Color changeColor;
-  @override
-  Widget build(BuildContext context) => SurfaceCard(
-        padding: const EdgeInsets.all(15),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(value, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)), const SizedBox(height: 4), Row(children: [Expanded(child: Text(label, style: const TextStyle(color: AppColors.muted, fontSize: 10))), Text(change, style: TextStyle(color: changeColor, fontSize: 10, fontWeight: FontWeight.w800))])]),
-      );
-}
-
-class _PeriodChip extends StatelessWidget {
-  const _PeriodChip(this.label, {this.selected = false});
-  final String label;
-  final bool selected;
-  @override
-  Widget build(BuildContext context) => Expanded(
-        child: Container(
-          margin: const EdgeInsets.only(right: 4),
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-          decoration: BoxDecoration(color: selected ? const Color(0xFF283421) : AppColors.surfaceRaised, borderRadius: BorderRadius.circular(9)),
-          child: Text(label, textAlign: TextAlign.center, style: TextStyle(color: selected ? AppColors.lime : AppColors.muted, fontSize: 8, fontWeight: FontWeight.w700)),
-        ),
-      );
-}
-
-class _WeightChart extends StatelessWidget {
-  const _WeightChart();
-  @override
-  Widget build(BuildContext context) => CustomPaint(painter: _WeightChartPainter(), child: const SizedBox.expand());
-}
-
-class _WeightChartPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    const values = [0.18, 0.34, 0.48, 0.57, 0.76, 0.91];
-    final points = <Offset>[];
-    for (var i = 0; i < values.length; i++) {
-      points.add(Offset(12 + (size.width - 24) * i / (values.length - 1), size.height * values[i]));
-    }
-    final linePaint = Paint()..color = AppColors.blue..strokeWidth = 3..style = PaintingStyle.stroke..strokeCap = StrokeCap.round;
-    final path = Path()..moveTo(points.first.dx, points.first.dy);
-    for (var i = 1; i < points.length; i++) {
-      final previous = points[i - 1];
-      final current = points[i];
-      final control = Offset((previous.dx + current.dx) / 2, (previous.dy + current.dy) / 2);
-      path.quadraticBezierTo(previous.dx, previous.dy, control.dx, control.dy);
-    }
-    path.lineTo(points.last.dx, points.last.dy);
-    canvas.drawPath(path, linePaint);
-    for (var i = 0; i < points.length; i++) {
-      final point = points[i];
-      canvas.drawCircle(point, i == points.length - 1 ? 6 : 5, Paint()..color = i == points.length - 1 ? AppColors.blue : AppColors.surface);
-      canvas.drawCircle(point, i == points.length - 1 ? 6 : 5, Paint()..color = AppColors.blue..style = PaintingStyle.stroke..strokeWidth = 2);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _ProgressTile extends StatelessWidget {

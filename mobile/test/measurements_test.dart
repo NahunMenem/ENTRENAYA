@@ -11,6 +11,95 @@ import 'package:entrenaya_mobile/features/measurements/measurements_screen.dart'
 import 'workout_test.dart' show MemoryPreferences;
 
 void main() {
+  testWidgets(
+    'weight history saves kilograms and preserves body measurements',
+    (tester) async {
+      tester.view.physicalSize = const Size(393, 852);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      SharedPreferencesAsyncPlatform.instance = MemoryPreferences();
+      final repository = MeasurementRepository();
+      final earlier = DateTime.now().subtract(const Duration(days: 10));
+      await repository.save([
+        MeasurementEntry(
+          id: 'waist',
+          date: earlier,
+          values: {BodyMeasure.waist: 90},
+        ),
+        MeasurementEntry(
+          id: 'previous_weight',
+          date: earlier,
+          values: {BodyMeasure.weight: 84.2},
+        ),
+      ]);
+      Widget app() => MaterialApp(
+        theme: AppTheme.dark,
+        home: const MeasurementsScreen(weightOnly: true),
+      );
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      expect(find.text('84,2 kg'), findsWidgets);
+      expect(find.text('Cintura'), findsNothing);
+      await tester.tap(find.text('Registrar peso'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Guardar peso'));
+      await tester.pumpAndSettle();
+      expect(find.text('Ingresá tu peso.'), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const ValueKey('measure_weight')),
+        '82,4',
+      );
+      await tester.tap(find.text('Guardar peso'));
+      await tester.pumpAndSettle();
+      expect(find.text('-1,8 kg desde el primer registro'), findsOneWidget);
+      var entries = await repository.load();
+      expect(measurementsFor(entries, BodyMeasure.weight), hasLength(2));
+      expect(
+        measurementsFor(
+          entries,
+          BodyMeasure.waist,
+        ).single.values[BodyMeasure.waist],
+        90,
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      expect(find.text('-1,8 kg desde el primer registro'), findsOneWidget);
+      await tester.drag(find.byType(ListView).first, const Offset(0, -500));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byIcon(Icons.edit_outlined).first);
+      await tester.tap(find.byTooltip('Editar registro').first);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('measure_weight')),
+        '81,6',
+      );
+      await tester.tap(find.text('Guardar peso'));
+      await tester.pumpAndSettle();
+      entries = await repository.load();
+      expect(
+        measurementsFor(
+          entries,
+          BodyMeasure.weight,
+        ).last.values[BodyMeasure.weight],
+        81.6,
+      );
+      await tester.scrollUntilVisible(
+        find.byTooltip('Eliminar registro').first,
+        200,
+      );
+      await tester.tap(find.byTooltip('Eliminar registro').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
+      entries = await repository.load();
+      expect(measurementsFor(entries, BodyMeasure.weight), hasLength(1));
+      expect(measurementsFor(entries, BodyMeasure.waist), hasLength(1));
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
   test(
     'partial measurements compare chronologically and survive storage',
     () async {
@@ -99,14 +188,17 @@ void main() {
     );
     final latest = (await MeasurementRepository().load()).last;
     expect(latest.values[BodyMeasure.waist], 85);
-      await tester.scrollUntilVisible(find.byTooltip('Eliminar registro').first, 200);
-      await tester.tap(find.byTooltip('Eliminar registro').first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Eliminar'));
-      await tester.pumpAndSettle();
-      final remaining = await MeasurementRepository().load();
-      expect(remaining, hasLength(1));
-      expect(remaining.single.values[BodyMeasure.waist], 90);
+    await tester.scrollUntilVisible(
+      find.byTooltip('Eliminar registro').first,
+      200,
+    );
+    await tester.tap(find.byTooltip('Eliminar registro').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Eliminar'));
+    await tester.pumpAndSettle();
+    final remaining = await MeasurementRepository().load();
+    expect(remaining, hasLength(1));
+    expect(remaining.single.values[BodyMeasure.waist], 90);
     await tester.pumpWidget(const SizedBox());
   });
 }

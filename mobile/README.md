@@ -46,6 +46,8 @@ El entrenamiento activo permite registrar kilos y repeticiones por serie, guarda
 
 En Progreso → Medidas se pueden guardar registros con fecha de brazo izquierdo/derecho, pierna izquierda/derecha, cintura y espalda, en centímetros. Cada registro admite medidas parciales. La vista muestra el historial, un gráfico por zona y las diferencias desde el primer registro y respecto al anterior. Permite editar y eliminar registros con confirmación. Las medidas también se guardan localmente en el teléfono, sin sincronización entre dispositivos todavía.
 
+En Progreso → Registrar peso se puede registrar el peso corporal en kilogramos, con fecha, historial, edición y eliminación. La vista de peso muestra el gráfico y diferencias desde el primer registro y respecto al anterior. Mi progreso muestra el último peso y su evolución real; no usa los valores de ejemplo del prototipo. El historial de medidas existente se conserva. El peso se guarda en este dispositivo, sin sincronización con PostgreSQL todavía.
+
 ## Videos de técnica
 
 La app consulta `GET /api/v1/exercises` para obtener el `video_url` de cada ejercicio y lo reproduce dentro de la app con controles de reproducción y avance. El backend prepara una tabla `exercises` con identificador, nombre y URL de video. El futuro panel administrador deberá guardar en ella una URL HTTPS de reproducción directa (por ejemplo, MP4 alojado en almacenamiento de archivos), no un enlace a una página de YouTube. Los identificadores del catálogo deben mantenerse estables para conservar el historial de cada ejercicio.

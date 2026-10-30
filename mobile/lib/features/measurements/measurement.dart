@@ -8,11 +8,21 @@ enum BodyMeasure {
   leftLeg('Pierna izquierda'),
   rightLeg('Pierna derecha'),
   waist('Cintura'),
-  back('Espalda');
+  back('Espalda'),
+  weight('Peso corporal', unit: 'kg');
 
-  const BodyMeasure(this.label);
+  const BodyMeasure(this.label, {this.unit = 'cm'});
   final String label;
+  final String unit;
 }
+
+List<BodyMeasure> trackedMetrics(bool weightOnly) => BodyMeasure.values
+    .where(
+      (metric) => weightOnly
+          ? metric == BodyMeasure.weight
+          : metric != BodyMeasure.weight,
+    )
+    .toList();
 
 class MeasurementEntry {
   const MeasurementEntry({

@@ -8,7 +8,8 @@ import 'measurement.dart';
 import 'measurement_form.dart';
 
 class MeasurementsScreen extends StatefulWidget {
-  const MeasurementsScreen({super.key});
+  const MeasurementsScreen({super.key, this.weightOnly = false});
+  final bool weightOnly;
 
   @override
   State<MeasurementsScreen> createState() => _MeasurementsScreenState();
@@ -17,7 +18,10 @@ class MeasurementsScreen extends StatefulWidget {
 class _MeasurementsScreenState extends State<MeasurementsScreen> {
   final _repository = MeasurementRepository();
   List<MeasurementEntry> _entries = [];
-  BodyMeasure _metric = BodyMeasure.waist;
+  late BodyMeasure _metric;
+  List<BodyMeasure> get _metrics => trackedMetrics(widget.weightOnly);
+  List<MeasurementEntry> get _visibleEntries =>
+      _entries.where((e) => _metrics.any(e.values.containsKey)).toList();
   bool _loading = true;
   bool _saving = false;
   String? _error;
@@ -25,6 +29,7 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
   @override
   void initState() {
     super.initState();
+    _metric = widget.weightOnly ? BodyMeasure.weight : BodyMeasure.waist;
     _load();
   }
 
@@ -39,8 +44,8 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
     } catch (_) {
       if (mounted) {
         setState(
-          () =>
-              _error = 'No pudimos leer tus medidas. Reintentá para continuar.',
+          () => _error =
+              'No pudimos leer tus registros. Reintentá para continuar.',
         );
       }
     } finally {
@@ -54,9 +59,13 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
       await _repository.save(entries);
       if (!mounted) return;
       setState(() => _entries = orderedMeasurements(entries));
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Medidas guardadas.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.weightOnly ? 'Peso guardado.' : 'Medidas guardadas.',
+          ),
+        ),
+      );
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -77,7 +86,10 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
   Future<void> _edit([MeasurementEntry? existing]) async {
     final entry = await Navigator.push<MeasurementEntry>(
       context,
-      MaterialPageRoute(builder: (_) => MeasurementForm(entry: existing)),
+      MaterialPageRoute(
+        builder: (_) =>
+            MeasurementForm(entry: existing, weightOnly: widget.weightOnly),
+      ),
     );
     if (!mounted || entry == null) return;
     await _save([..._entries.where((e) => e.id != entry.id), entry]);
@@ -89,7 +101,7 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
       builder: (context) => AlertDialog(
         title: const Text('¿Eliminar registro?'),
         content: Text(
-          'Se eliminarán las medidas del ${measureDate(entry.date)}.',
+          'Se eliminará este registro del ${measureDate(entry.date)}.',
         ),
         actions: [
           TextButton(
@@ -104,18 +116,26 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
       ),
     );
     if (mounted && confirmed == true) {
-      await _save(_entries.where((e) => e.id != entry.id).toList());
+      final preserved = Map<BodyMeasure, double>.from(entry.values)
+        ..removeWhere((metric, _) => _metrics.contains(metric));
+      await _save([
+        ..._entries.where((e) => e.id != entry.id),
+        if (preserved.isNotEmpty)
+          MeasurementEntry(id: entry.id, date: entry.date, values: preserved),
+      ]);
     }
   }
 
   String _delta(double value) =>
-      '${value > 0 ? '+' : ''}${measureNumber(value)} cm';
+      '${value > 0 ? '+' : ''}${measureNumber(value)} ${_metric.unit}';
 
   @override
   Widget build(BuildContext context) {
     final points = measurementsFor(_entries, _metric);
     return Scaffold(
-      appBar: AppBar(title: const Text('Mis medidas')),
+      appBar: AppBar(
+        title: Text(widget.weightOnly ? 'Mi peso' : 'Mis medidas'),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -139,20 +159,25 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  const SectionHeading(
+                  SectionHeading(
                     title: 'Tu evolución',
-                    subtitle:
-                        'Registrá tus medidas y compará los cambios con el tiempo.',
+                    subtitle: widget.weightOnly
+                        ? 'Registrá tu peso y compará los cambios con el tiempo.'
+                        : 'Registrá tus medidas y compará los cambios con el tiempo.',
                   ),
                   const SizedBox(height: 18),
                   LimeButton(
-                    label: _saving ? 'Guardando…' : 'Registrar medidas',
+                    label: _saving
+                        ? 'Guardando…'
+                        : widget.weightOnly
+                        ? 'Registrar peso'
+                        : 'Registrar medidas',
                     loading: _saving,
                     icon: Icons.add_rounded,
                     onPressed: _edit,
                   ),
                   const SizedBox(height: 20),
-                  if (_entries.isEmpty)
+                  if (_visibleEntries.isEmpty)
                     const SurfaceCard(
                       child: Column(
                         children: [
@@ -168,7 +193,7 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
                           ),
                           SizedBox(height: 8),
                           Text(
-                            'Agregá las medidas que quieras. Con el próximo registro vas a poder comparar los cambios.',
+                            'Agregá un registro. Con el próximo vas a poder comparar los cambios.',
                             style: TextStyle(color: AppColors.muted),
                           ),
                         ],
@@ -179,7 +204,7 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
                       spacing: 7,
                       runSpacing: 7,
                       children: [
-                        for (final metric in BodyMeasure.values)
+                        for (final metric in _metrics)
                           ChoiceChip(
                             label: Text(metric.label),
                             selected: _metric == metric,
@@ -207,7 +232,7 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
                             )
                           else ...[
                             Text(
-                              '${measureNumber(points.last.values[_metric]!)} cm',
+                              '${measureNumber(points.last.values[_metric]!)} ${_metric.unit}',
                               key: const ValueKey('latest_measurement'),
                               style: const TextStyle(
                                 color: AppColors.lime,
@@ -238,7 +263,7 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
                               ),
                               const SizedBox(height: 18),
                               Text(
-                                'Rango: ${measureNumber(points.map((e) => e.values[_metric]!).reduce(math.min))}–${measureNumber(points.map((e) => e.values[_metric]!).reduce(math.max))} cm',
+                                'Rango: ${measureNumber(points.map((e) => e.values[_metric]!).reduce(math.min))}–${measureNumber(points.map((e) => e.values[_metric]!).reduce(math.max))} ${_metric.unit}',
                                 style: const TextStyle(
                                   color: AppColors.muted,
                                   fontSize: 11,
@@ -247,12 +272,15 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
                               const SizedBox(height: 8),
                               Semantics(
                                 label:
-                                    'Evolución de ${_metric.label}. ${points.map((e) => '${measureDate(e.date)}: ${measureNumber(e.values[_metric]!)} centímetros').join('; ')}',
+                                    'Evolución de ${_metric.label}. ${points.map((e) => '${measureDate(e.date)}: ${measureNumber(e.values[_metric]!)} ${_metric.unit}').join('; ')}',
                                 child: SizedBox(
                                   height: 150,
                                   width: double.infinity,
                                   child: CustomPaint(
-                                    painter: _MeasurementChart(points, _metric),
+                                    painter: MeasurementTrendChart(
+                                      points,
+                                      _metric,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -289,15 +317,17 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
-                      'Historial de medidas',
+                    Text(
+                      widget.weightOnly
+                          ? 'Historial de peso'
+                          : 'Historial de medidas',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    for (final entry in _entries.reversed)
+                    for (final entry in _visibleEntries.reversed)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: SurfaceCard(
@@ -332,7 +362,7 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
                                   ),
                                 ],
                               ),
-                              for (final metric in BodyMeasure.values)
+                              for (final metric in _metrics)
                                 if (entry.values[metric] != null)
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
@@ -349,7 +379,7 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
                                           ),
                                         ),
                                         Text(
-                                          '${measureNumber(entry.values[metric]!)} cm',
+                                          '${measureNumber(entry.values[metric]!)} ${metric.unit}',
                                         ),
                                       ],
                                     ),
@@ -371,8 +401,8 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
   }
 }
 
-class _MeasurementChart extends CustomPainter {
-  const _MeasurementChart(this.points, this.metric);
+class MeasurementTrendChart extends CustomPainter {
+  const MeasurementTrendChart(this.points, this.metric);
   final List<MeasurementEntry> points;
   final BodyMeasure metric;
 
@@ -415,6 +445,6 @@ class _MeasurementChart extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _MeasurementChart oldDelegate) =>
+  bool shouldRepaint(covariant MeasurementTrendChart oldDelegate) =>
       oldDelegate.points != points || oldDelegate.metric != metric;
 }
