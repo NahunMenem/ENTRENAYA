@@ -38,6 +38,8 @@ El login de Google se valida en FastAPI y la identidad de usuario se guarda en P
 
 El entrenamiento activo permite registrar kilos y repeticiones por serie, guardar un borrador automáticamente y finalizar la sesión. Los registros se guardan en el teléfono; la próxima sesión muestra las últimas series completadas de cada ejercicio. No hay sincronización de entrenamientos con PostgreSQL todavía.
 
+En Progreso → Medidas se pueden guardar registros con fecha de brazo izquierdo/derecho, pierna izquierda/derecha, cintura y espalda, en centímetros. Cada registro admite medidas parciales. La vista muestra el historial, un gráfico por zona y las diferencias desde el primer registro y respecto al anterior. Permite editar y eliminar registros con confirmación. Las medidas también se guardan localmente en el teléfono, sin sincronización entre dispositivos todavía.
+
 ## Videos de técnica
 
 La app consulta `GET /api/v1/exercises` para obtener el `video_url` de cada ejercicio y lo reproduce dentro de la app con controles de reproducción y avance. El backend prepara una tabla `exercises` con identificador, nombre y URL de video. El futuro panel administrador deberá guardar en ella una URL HTTPS de reproducción directa (por ejemplo, MP4 alojado en almacenamiento de archivos), no un enlace a una página de YouTube. Los identificadores del catálogo deben mantenerse estables para conservar el historial de cada ejercicio.

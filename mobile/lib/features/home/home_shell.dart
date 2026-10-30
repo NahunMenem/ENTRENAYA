@@ -6,6 +6,7 @@ import '../../core/app_theme.dart';
 import '../../core/models.dart';
 import '../../core/widgets.dart';
 import '../training/workout_screen.dart';
+import '../measurements/measurements_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, required this.profile, required this.onSignOut});
@@ -687,13 +688,13 @@ class _ProgressTab extends StatelessWidget {
         const SizedBox(height: 11),
         Row(
           children: [
-            const Expanded(child: _ProgressTile(icon: Icons.straighten_rounded, title: 'Medidas', detail: 'Cintura 86 cm')),
+            Expanded(child: _ProgressTile(icon: Icons.straighten_rounded, title: 'Medidas', detail: 'Historial y evolución', onTap: () => _openMeasurements(context))),
             const SizedBox(width: 10),
             const Expanded(child: _ProgressTile(icon: Icons.photo_library_outlined, title: 'Fotos', detail: 'Antes / Después')),
           ],
         ),
         const SizedBox(height: 14),
-        LimeButton(label: 'Registrar progreso', icon: Icons.add_rounded, onPressed: () => _showSoon(context, 'Nuevo registro de progreso')),
+        LimeButton(label: 'Registrar medidas', icon: Icons.add_rounded, onPressed: () => _openMeasurements(context)),
       ],
     );
   }
@@ -763,15 +764,23 @@ class _WeightChartPainter extends CustomPainter {
 }
 
 class _ProgressTile extends StatelessWidget {
-  const _ProgressTile({required this.icon, required this.title, required this.detail});
+  const _ProgressTile({required this.icon, required this.title, required this.detail, this.onTap});
   final IconData icon;
   final String title;
   final String detail;
+  final VoidCallback? onTap;
   @override
-  Widget build(BuildContext context) => SurfaceCard(
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: SurfaceCard(
         padding: const EdgeInsets.all(15),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, color: AppColors.lime, size: 20), const SizedBox(height: 12), Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), const SizedBox(height: 4), Text(detail, style: const TextStyle(color: AppColors.muted, fontSize: 11))]),
-      );
+      ));
+}
+
+void _openMeasurements(BuildContext context) {
+  Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const MeasurementsScreen()));
 }
 
 class _NutritionTab extends StatefulWidget {
