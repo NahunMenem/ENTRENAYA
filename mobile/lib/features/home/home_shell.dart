@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../core/models.dart';
 import '../../core/widgets.dart';
+import '../training/workout_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, required this.profile, required this.onSignOut});
@@ -952,147 +953,7 @@ class _Avatar extends StatelessWidget {
 }
 
 void _openWorkout(BuildContext context) {
-  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const _WorkoutSessionScreen()));
-}
-
-class _WorkoutSessionScreen extends StatefulWidget {
-  const _WorkoutSessionScreen();
-  @override
-  State<_WorkoutSessionScreen> createState() => _WorkoutSessionScreenState();
-}
-
-class _WorkoutSessionScreenState extends State<_WorkoutSessionScreen> {
-  final _exercises = const ['Press de banca', 'Aperturas con mancuernas', 'Press inclinado', 'Flexiones', 'Fondos en banco', 'Extensión de tríceps'];
-  int _exercise = 0;
-  int _set = 1;
-  int _completed = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    final finished = _exercise >= _exercises.length;
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
-        title: const Text('PECHO Y TRÍCEPS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1)),
-        actions: [TextButton(onPressed: () => setState(() => _exercise = _exercises.length), child: const Text('Finalizar'))],
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(22, 15, 22, 25),
-          child: finished
-              ? _WorkoutComplete(completed: _completed, onDone: () => Navigator.pop(context))
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Tiempo entrenando', style: TextStyle(color: AppColors.muted, fontSize: 12)),
-                    const SizedBox(height: 5),
-                    const Text('24:35', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 28),
-                    Text('SERIE $_set DE 4', style: const TextStyle(color: AppColors.lime, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
-                    const SizedBox(height: 9),
-                    Text(_exercises[_exercise], style: Theme.of(context).textTheme.headlineMedium),
-                    const SizedBox(height: 7),
-                    const Text('Última sesión: 40 kg × 12 repeticiones', style: TextStyle(color: AppColors.muted, fontSize: 12)),
-                    const SizedBox(height: 21),
-                    SurfaceCard(
-                      padding: const EdgeInsets.all(15),
-                      child: Column(children: const [
-                        Row(children: [Expanded(child: Text('SERIE', style: _TableLabel.style)), Expanded(child: Text('PESO', style: _TableLabel.style)), Expanded(child: Text('REPS', style: _TableLabel.style)), Expanded(child: Text('ÚLTIMA VEZ', style: _TableLabel.style))]),
-                        SizedBox(height: 12),
-                        _SetRow(number: '1', weight: '40 kg', reps: '12', previous: '40 kg × 12'),
-                        _SetRow(number: '2', weight: '42 kg', reps: '10', previous: '40 kg × 12'),
-                        _SetRow(number: '3', weight: '42 kg', reps: '10', previous: '40 kg × 12'),
-                        _SetRow(number: '4', weight: '40 kg', reps: '12', previous: '40 kg × 12'),
-                      ]),
-                    ),
-                    const Spacer(),
-                    SurfaceCard(
-                      padding: const EdgeInsets.all(15),
-                      child: Row(children: [const Icon(Icons.timer_outlined, color: AppColors.lime), const SizedBox(width: 9), const Expanded(child: Text('DESCANSO 01:30', style: TextStyle(fontWeight: FontWeight.w800))), TextButton(onPressed: () => setState(() => _nextSet()), child: const Text('Omitir'))]),
-                    ),
-                    const SizedBox(height: 12),
-                    LimeButton(label: 'Completar serie', icon: Icons.check_rounded, onPressed: _nextSet),
-                    const SizedBox(height: 8),
-                    Center(child: TextButton(onPressed: () => setState(() => _nextExercise()), child: const Text('Siguiente ejercicio  →', style: TextStyle(color: AppColors.muted)))),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
-
-  void _nextSet() {
-    setState(() {
-      _completed += 1;
-      if (_set == 4) {
-        _nextExercise();
-      } else {
-        _set += 1;
-      }
-    });
-  }
-
-  void _nextExercise() {
-    _exercise += 1;
-    _set = 1;
-  }
-}
-
-class _TableLabel {
-  static const style = TextStyle(color: AppColors.muted, fontSize: 8, fontWeight: FontWeight.w800);
-}
-
-class _SetRow extends StatelessWidget {
-  const _SetRow({required this.number, required this.weight, required this.reps, required this.previous});
-  final String number;
-  final String weight;
-  final String reps;
-  final String previous;
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 12),
-        child: Row(children: [Expanded(child: Text(number, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12))), Expanded(child: Text(weight, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12))), Expanded(child: Text(reps, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12))), Expanded(child: Text(previous, style: const TextStyle(color: AppColors.muted, fontSize: 8)))]),
-      );
-}
-
-class _WorkoutComplete extends StatelessWidget {
-  const _WorkoutComplete({required this.completed, required this.onDone});
-  final int completed;
-  final VoidCallback onDone;
-  @override
-  Widget build(BuildContext context) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(width: 84, height: 84, decoration: const BoxDecoration(color: Color(0xFF25341D), shape: BoxShape.circle), child: const Icon(Icons.check_rounded, color: AppColors.lime, size: 44)),
-            const SizedBox(height: 20),
-            Text(completed >= 24 ? '¡Entrenamiento completado!' : '¡Buen trabajo!', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 8),
-            const Text('Sumaste un paso más hacia tu objetivo.', style: TextStyle(color: AppColors.muted)),
-            const SizedBox(height: 25),
-            const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              _CompleteMetric(value: '50 min', label: 'Duración'),
-              SizedBox(width: 12),
-              _CompleteMetric(value: '6', label: 'Ejercicios'),
-              SizedBox(width: 12),
-              _CompleteMetric(value: '8 días', label: 'Racha'),
-            ]),
-            const SizedBox(height: 30),
-            LimeButton(label: 'Guardar entrenamiento', onPressed: onDone),
-          ],
-        ),
-      );
-}
-
-class _CompleteMetric extends StatelessWidget {
-  const _CompleteMetric({required this.value, required this.label});
-  final String value;
-  final String label;
-  @override
-  Widget build(BuildContext context) => SurfaceCard(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        child: Column(children: [Text(value, style: const TextStyle(fontWeight: FontWeight.w800)), const SizedBox(height: 4), Text(label, style: const TextStyle(color: AppColors.muted, fontSize: 9))]),
-      );
+  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const WorkoutScreen()));
 }
 
 void _showSoon(BuildContext context, String feature) {

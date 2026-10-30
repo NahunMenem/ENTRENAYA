@@ -35,3 +35,11 @@ Los IDs OAuth son valores de configuración públicos de la app. No guardes clie
 ## Estado de los datos
 
 El login de Google se valida en FastAPI y la identidad de usuario se guarda en PostgreSQL. El perfil de entrenamiento, las rutinas, el progreso y el seguimiento de nutrición de esta primera versión son datos de interfaz/locales; todavía no se sincronizan con la API.
+
+El entrenamiento activo permite registrar kilos y repeticiones por serie, guardar un borrador automáticamente y finalizar la sesión. Los registros se guardan en el teléfono; la próxima sesión muestra las últimas series completadas de cada ejercicio. No hay sincronización de entrenamientos con PostgreSQL todavía.
+
+## Videos de técnica
+
+La app consulta `GET /api/v1/exercises` para obtener el `video_url` de cada ejercicio y lo reproduce dentro de la app con controles de reproducción y avance. El backend prepara una tabla `exercises` con identificador, nombre y URL de video. El futuro panel administrador deberá guardar en ella una URL HTTPS de reproducción directa (por ejemplo, MP4 alojado en almacenamiento de archivos), no un enlace a una página de YouTube. Los identificadores del catálogo deben mantenerse estables para conservar el historial de cada ejercicio.
+
+Si no hay un video asociado, la app informa que todavía no está disponible. El panel de carga, la subida de archivos y los permisos de administrador se implementarán después.
