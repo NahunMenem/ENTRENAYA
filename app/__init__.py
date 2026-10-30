@@ -1,0 +1,1 @@
+"""EntrenaYa API application."""
