@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../core/app_theme.dart';
@@ -18,187 +20,169 @@ class WelcomeScreen extends StatelessWidget {
   final String? errorMessage;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(22, 16, 22, 24),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight - 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Image.asset(
-                      'assets/images/entrenaya_logo.png',
-                      width: 148,
-                      height: 148,
-                      fit: BoxFit.contain,
-                      semanticLabel: 'Logo de EntrenaYa',
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  _WelcomeHero(),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Tu mejor versión\nempieza hoy',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 35),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Entrená a tu ritmo, seguí tu progreso y alcanzá tus objetivos.',
-                    style: TextStyle(color: AppColors.muted, fontSize: 15, height: 1.5),
-                  ),
-                  const SizedBox(height: 22),
-                  LimeButton(label: 'Comenzar', onPressed: isSigningIn ? null : onStart),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 58,
-                    child: OutlinedButton.icon(
-                      onPressed: isSigningIn ? null : onGoogleSignIn,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: AppColors.surfaceRaised,
-                        side: const BorderSide(color: AppColors.line),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
-                        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+  Widget build(BuildContext context) => Scaffold(
+    body: SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = math.min(constraints.maxWidth, 480.0);
+          final heroHeight = math
+              .min(width - 32, constraints.maxHeight * 0.43)
+              .clamp(210.0, 370.0);
+          return SingleChildScrollView(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const BrandMark(compact: true),
+                      const SizedBox(height: 16),
+                      _WelcomePhoto(height: heroHeight),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Tu mejor versión\nempieza hoy',
+                        style: Theme.of(context).textTheme.headlineLarge
+                            ?.copyWith(
+                              fontSize: width < 350 ? 30 : 34,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.8,
+                              height: 1.04,
+                            ),
                       ),
-                      icon: isSigningIn
-                          ? const SizedBox.square(
-                              dimension: 19,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const _GoogleGlyph(),
-                      label: Text(isSigningIn ? 'Conectando…' : 'Continuar con Google'),
-                    ),
-                  ),
-                  if (errorMessage != null) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(13),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF351F24),
-                        borderRadius: BorderRadius.circular(14),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Entrená a tu ritmo, seguí tu progreso y alcanzá tus objetivos.',
+                        style: TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 14,
+                          height: 1.45,
+                        ),
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.info_outline_rounded, color: Color(0xFFFF8D96), size: 19),
-                          const SizedBox(width: 9),
-                          Expanded(
-                            child: Text(
-                              errorMessage!,
-                              style: const TextStyle(color: Color(0xFFFFC0C5), fontSize: 13),
+                      const SizedBox(height: 20),
+                      LimeButton(
+                        label: 'Comenzar',
+                        height: 52,
+                        onPressed: isSigningIn ? null : onStart,
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: OutlinedButton(
+                          onPressed: isSigningIn ? null : onGoogleSignIn,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: AppColors.surfaceRaised,
+                            side: const BorderSide(color: AppColors.line),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(17),
+                            ),
+                            textStyle: const TextStyle(
+                          fontFamily: 'Roboto',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ],
+                          child: Text(
+                            isSigningIn
+                                ? 'Conectando…'
+                                : 'Continuar con Google',
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-                  Center(
-                    child: TextButton(
-                      onPressed: onGoogleSignIn,
-                      child: const Text(
-                        '¿Ya tenés cuenta?  Iniciá sesión',
-                        style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600),
+                      if (errorMessage != null) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          errorMessage!,
+                          style: const TextStyle(color: Color(0xFFFFB3BA)),
+                        ),
+                      ],
+                      const SizedBox(height: 4),
+                      TextButton(
+                        onPressed: isSigningIn ? null : onGoogleSignIn,
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          foregroundColor: AppColors.muted,
+                          alignment: Alignment.centerLeft,
+                        ),
+                        child: const Text(
+                          '¿Ya tenés cuenta?  Iniciá sesión',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
 }
 
-class _WelcomeHero extends StatelessWidget {
+class _WelcomePhoto extends StatelessWidget {
+  const _WelcomePhoto({required this.height});
+  final double height;
+
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 232,
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(24),
+    child: SizedBox(
+      height: height,
       width: double.infinity,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF29331E), Color(0xFF182027), Color(0xFF11151A)],
-        ),
-      ),
       child: Stack(
+        fit: StackFit.expand,
         children: [
-          Positioned(
-            right: -24,
-            top: -34,
-            child: Container(
-              width: 190,
-              height: 190,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.lime.withValues(alpha: 0.13), width: 24),
+          Image.asset(
+            'assets/images/welcome_gym.png',
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+            semanticLabel: 'Dos atletas en un gimnasio',
+          ),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.center,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Color(0x8C090F11)],
               ),
             ),
           ),
           Positioned(
-            right: 36,
-            top: 36,
-            child: Icon(Icons.fitness_center_rounded, size: 90, color: AppColors.lime.withValues(alpha: 0.92)),
-          ),
-          Positioned(
-            left: 18,
-            bottom: 17,
+            left: 14,
+            bottom: 16,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
               decoration: BoxDecoration(
-                color: AppColors.background.withValues(alpha: 0.86),
+                color: AppColors.background.withValues(alpha: 0.92),
                 borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
               ),
               child: const Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.local_fire_department_rounded, color: AppColors.lime, size: 20),
+                  Icon(
+                    Icons.local_fire_department_outlined,
+                    color: AppColors.lime,
+                    size: 19,
+                  ),
                   SizedBox(width: 8),
-                  Text('Tu ritmo. Tu meta.', style: TextStyle(fontWeight: FontWeight.w700)),
+                  Text(
+                    'Tu ritmo. Tu meta.',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
                 ],
-              ),
-            ),
-          ),
-          Positioned(
-            left: 22,
-            top: 22,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-              decoration: BoxDecoration(
-                color: AppColors.lime.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                'ENTRENÁ A TU MANERA',
-                style: TextStyle(color: AppColors.lime, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1),
               ),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _GoogleGlyph extends StatelessWidget {
-  const _GoogleGlyph();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Text(
-      'G',
-      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: Color(0xFF8AB4F8)),
-    );
-  }
+    ),
+  );
 }

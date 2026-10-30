@@ -38,11 +38,28 @@ class AppFlow extends StatefulWidget {
 }
 
 class _AppFlowState extends State<AppFlow> {
+  static const _demoMode = bool.fromEnvironment(
+    'DEMO_MODE',
+    defaultValue: true,
+  );
   final AuthService _authService = AuthService();
   AthleteProfile? _profile;
   String? _signedInName;
   String? _authError;
   bool _isSigningIn = false;
+
+  void _enterPreview() {
+    setState(
+      () => _profile = const AthleteProfile(
+        name: 'Atleta',
+        goal: 'Ganar fuerza',
+        level: 'Principiante',
+        trainingPlace: 'Gimnasio',
+        daysPerWeek: 4,
+        sessionMinutes: 60,
+      ),
+    );
+  }
 
   Future<void> _signInWithGoogle() async {
     setState(() {
@@ -87,7 +104,7 @@ class _AppFlowState extends State<AppFlow> {
   }
 
   Future<void> _signOut() async {
-    await _authService.signOut();
+    if (!_demoMode) await _authService.signOut();
     if (!mounted) return;
     setState(() {
       _profile = null;
@@ -105,8 +122,10 @@ class _AppFlowState extends State<AppFlow> {
     return WelcomeScreen(
       isSigningIn: _isSigningIn,
       errorMessage: _authError,
-      onStart: () => _openOnboarding(initialName: _signedInName),
-      onGoogleSignIn: _signInWithGoogle,
+      onStart: _demoMode
+          ? _enterPreview
+          : () => _openOnboarding(initialName: _signedInName),
+      onGoogleSignIn: _demoMode ? _enterPreview : _signInWithGoogle,
     );
   }
 }

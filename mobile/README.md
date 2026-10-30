@@ -22,6 +22,10 @@ flutter run \
 
 El backend predeterminado es `https://entrenaya-production.up.railway.app`.
 
+## Acceso temporal de demostración
+
+Por pedido del prototipo, `DEMO_MODE` está activado por defecto: Comenzar, Continuar con Google e Iniciá sesión abren el inicio directamente con un perfil local de demostración. Estos botones no autentican ni crean cuentas en el servidor. Para recuperar el flujo real de Google y el onboarding, ejecutá la app con `--dart-define=DEMO_MODE=false` y los clientes OAuth configurados.
+
 ## Configurar Google Sign-In
 
 En Google Cloud Console, creá los clientes OAuth para Android, iOS y Web dentro del mismo proyecto:

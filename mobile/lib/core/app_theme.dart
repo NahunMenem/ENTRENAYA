@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const background = Color(0xFF0B0E12);
-  static const surface = Color(0xFF171C23);
-  static const surfaceRaised = Color(0xFF202833);
-  static const lime = Color(0xFFB6FF29);
-  static const limeSoft = Color(0xFF9DDF20);
-  static const muted = Color(0xFFA0A8B4);
-  static const line = Color(0xFF303946);
+  static const background = Color(0xFF090F11);
+  static const surface = Color(0xFF151F22);
+  static const surfaceRaised = Color(0xFF202B31);
+  static const lime = Color(0xFF00E69A);
+  static const limeSoft = Color(0xFF00B985);
+  static const muted = Color(0xFF9AA8AD);
+  static const line = Color(0xFF2D3C40);
   static const purple = Color(0xFF30263D);
   static const blue = Color(0xFF64A8FF);
   static const orange = Color(0xFFFFB547);

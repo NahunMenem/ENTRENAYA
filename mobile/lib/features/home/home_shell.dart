@@ -262,14 +262,14 @@ class _TodayWorkout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 230,
+      constraints: const BoxConstraints(minHeight: 230),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient: const LinearGradient(
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
-          colors: [Color(0xFF384321), Color(0xFF1B2424), Color(0xFF15191F)],
+          colors: [Color(0xFF104B3D), Color(0xFF142C2A), Color(0xFF151F22)],
         ),
       ),
       child: Stack(
@@ -287,12 +287,13 @@ class _TodayWorkout extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(19, 17, 18, 17),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Text('ENTRENAMIENTO DE HOY', style: TextStyle(color: AppColors.lime, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
-                    const Spacer(),
+                    const Expanded(child: Text('ENTRENAMIENTO DE HOY', style: TextStyle(color: AppColors.lime, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1))),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(color: AppColors.lime.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(20)),
@@ -300,7 +301,7 @@ class _TodayWorkout extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Spacer(),
+                const SizedBox(height: 26),
                 const Text('Pecho y tríceps', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
                 const Text('6 ejercicios  ·  50 min', style: TextStyle(color: Colors.white70, fontSize: 13)),

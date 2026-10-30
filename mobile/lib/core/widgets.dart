@@ -17,10 +17,14 @@ class BrandMark extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: AppColors.lime,
+            gradient: const LinearGradient(
+              begin: Alignment.bottomLeft,
+              end: Alignment.topRight,
+              colors: [Color(0xFF009AA6), AppColors.lime],
+            ),
             borderRadius: BorderRadius.circular(compact ? 13 : 15),
           ),
-          child: const Icon(Icons.bolt_rounded, color: AppColors.background, size: 27),
+          child: const Icon(Icons.fitness_center_rounded, color: Colors.white, size: 25),
         ),
         const SizedBox(width: 11),
         Text(
@@ -64,7 +68,7 @@ class LimeButton extends StatelessWidget {
           foregroundColor: AppColors.background,
           disabledBackgroundColor: AppColors.lime.withValues(alpha: 0.55),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          textStyle: const TextStyle(fontFamily: 'Roboto', fontSize: 16, fontWeight: FontWeight.w800),
         ),
         child: loading
             ? const SizedBox.square(
