@@ -18,6 +18,10 @@ Servicio `ENTRENAYA-MONITOREO` en el mismo proyecto que FastAPI. Root directory 
 
 ## Flujo de publicación
 
+### Acceso temporal
+
+`ADMIN_DEMO_MODE=true` habilita temporalmente el panel sin contraseña, incluido el acceso a sus acciones de gestión. `/login` redirige al inicio. La clave de conexión con FastAPI permanece en el servidor. Para volver a exigir la contraseña administrativa, cambiar `ADMIN_DEMO_MODE=false` en Railway y desplegar; no hace falta cambiar la contraseña existente.
+
 1. Crear o editar un ejercicio y su grupo muscular, equipamiento, indicaciones y URL HTTPS opcional de video.
 2. Activar Publicado para que figure en la biblioteca de la app.
 3. Crear una rutina, elegir categoría y nivel y asignar ejercicios, días sugeridos, series, repeticiones y descanso.

@@ -94,7 +94,11 @@ async function api(path: string, method = "GET", body?: unknown) {
     );
   return data;
 }
-export default function Dashboard() {
+export default function Dashboard({
+  demoMode = false,
+}: {
+  demoMode?: boolean;
+}) {
   const [tab, setTab] = useState("Resumen");
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -228,16 +232,18 @@ export default function Dashboard() {
             <b /> API conectada al proyecto
           </span>
         </div>
-        <button
-          className="logout"
-          onClick={async () => {
-            await fetch("/api/session", { method: "DELETE" });
-            window.location.href = "/login";
-          }}
-        >
-          <LogOut size={17} />
-          Cerrar sesión
-        </button>
+        {!demoMode && (
+          <button
+            className="logout"
+            onClick={async () => {
+              await fetch("/api/session", { method: "DELETE" });
+              window.location.href = "/login";
+            }}
+          >
+            <LogOut size={17} />
+            Cerrar sesión
+          </button>
+        )}
       </aside>
       <main className="content">
         <header className="topbar">
@@ -247,11 +253,17 @@ export default function Dashboard() {
           <div className="operator">
             <span>A</span>
             <div>
-              Administrador<small>EntrenaYa</small>
+              Administrador
+              <small>
+                {demoMode ? "Acceso temporal sin contraseña" : "EntrenaYa"}
+              </small>
             </div>
           </div>
         </header>
         <section className="page">
+          {demoMode && (
+            <div className="demo-banner">Acceso temporal sin contraseña</div>
+          )}
           <div className="page-heading">
             <div>
               <div className="eyebrow">GESTIÓN DE CONTENIDO</div>

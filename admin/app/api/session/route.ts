@@ -7,11 +7,15 @@ import {
   sameOrigin,
   sameSecret,
   sessionSeconds,
+  demoMode,
 } from "@/lib/auth";
 
 const attempts = new Map<string, { count: number; until: number }>();
 export async function GET() {
-  return NextResponse.json({ authenticated: await authenticated() });
+  return NextResponse.json({
+    authenticated: await authenticated(),
+    demoMode: demoMode(),
+  });
 }
 export async function POST(request: Request) {
   if (!sameOrigin(request))
@@ -19,6 +23,7 @@ export async function POST(request: Request) {
       { detail: "Origen no permitido." },
       { status: 403 },
     );
+  if (demoMode()) return NextResponse.json({ ok: true });
   if (!configured())
     return NextResponse.json(
       { detail: "Configurá las credenciales del panel en el servidor." },
