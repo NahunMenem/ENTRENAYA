@@ -62,6 +62,11 @@ class CatalogTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len((await self.client.get("/api/v1/admin/exercises", headers=self.headers)).json()), 1)
 
     async def test_validation(self):
+        preflight = await self.client.options('/api/v1/routines', headers={
+            'Origin': 'http://localhost:64011', 'Access-Control-Request-Method': 'GET',
+        })
+        self.assertEqual(preflight.status_code, 200)
+        self.assertEqual(preflight.headers.get('access-control-allow-origin'), 'http://localhost:64011')
         body = dict(name="Press", muscle_group="Pecho", video_url="http://example.com/video.mp4")
         self.assertEqual((await self.client.post("/api/v1/admin/exercises", json=body, headers=self.headers)).status_code, 422)
         template = dict(name="Test", category="Volumen", level="Principiante", days=[1, 1],
