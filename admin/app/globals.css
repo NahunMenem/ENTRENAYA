@@ -1,12 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
 :root {
   color-scheme: dark;
-  --surface: #131e20;
-  --green: #00c58a;
-  --ink: #eaf4f1;
-  --muted: #95aaa4;
-  --line: #283936;
-  --bg: #0b1213;
+  --surface: #171d25;
+  --green: #b4ff29;
+  --ink: #f6f7f9;
+  --muted: #9da7b4;
+  --line: #2b3543;
+  --bg: #0b1015;
 }
 * {
   box-sizing: border-box;
@@ -56,7 +56,7 @@ button {
   border: 0;
   border-radius: 10px;
   background: var(--green);
-  color: #052b20;
+  color: #0b1015;
   padding: 12px 18px;
   font-weight: 700;
 }
@@ -71,13 +71,13 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid #00c58a70;
+  outline: 3px solid #b4ff2970;
   outline-offset: 2px;
 }
 input,
 select,
 textarea {
-  border: 1px solid #30443f;
+  border: 1px solid #303946;
   background: var(--surface);
   border-radius: 9px;
   padding: 12px;
@@ -119,8 +119,8 @@ label small {
 }
 .sidebar {
   width: 246px;
-  background: #0d2625;
-  color: #eaf4ef;
+  background: #10161d;
+  color: #f6f7f9;
   position: fixed;
   inset: 0 auto 0 0;
   padding: 30px 22px;
@@ -136,7 +136,7 @@ label small {
   gap: 8px;
 }
 .brand i {
-  background: linear-gradient(135deg, #008e92, #00e6a0);
+  background: linear-gradient(135deg, #a3e927, #b4ff29);
   width: 38px;
   height: 38px;
   border-radius: 12px;
@@ -146,11 +146,11 @@ label small {
   margin-right: 3px;
 }
 .brand span {
-  color: #00e69a;
+  color: #b4ff29;
   margin-left: -8px;
 }
 .workspace {
-  color: #6f9290;
+  color: #7d899b;
   font-size: 9px;
   letter-spacing: 1.5px;
   margin: 25px 0 30px;
@@ -160,7 +160,7 @@ nav {
   gap: 8px;
 }
 nav button {
-  color: #9fb6b2;
+  color: #9faabb;
   background: none;
   justify-content: flex-start;
   padding: 14px 12px;
@@ -170,31 +170,31 @@ nav button svg:last-child {
   margin-left: auto;
 }
 nav button.active {
-  color: #4ce8b4;
-  background: #174a3f;
+  color: #b4ff29;
+  background: #26311d;
 }
 .sidebar-note {
   margin-top: auto;
-  background: #143331;
-  border: 1px solid #234740;
+  background: #1b232d;
+  border: 1px solid #303946;
   border-radius: 14px;
   padding: 18px;
-  color: #42ddb1;
+  color: #b4ff29;
 }
 .sidebar-note strong {
   display: block;
-  color: #e5f0ec;
+  color: #edf0f5;
   margin-top: 12px;
   font-size: 13px;
 }
 .sidebar-note p {
-  color: #89a6a0;
+  color: #9aa5b6;
   font-size: 11px;
   line-height: 1.7;
 }
 .sidebar-note span {
   font-size: 10px;
-  color: #9dbab2;
+  color: #a7b1bf;
   display: flex;
   gap: 6px;
   align-items: center;
@@ -212,7 +212,7 @@ b {
 }
 .logout {
   background: none;
-  color: #8ca7a1;
+  color: #9ba7b7;
   font-size: 12px;
   justify-content: flex-start;
   margin-top: 20px;
@@ -248,11 +248,11 @@ b {
 .operator > span {
   width: 36px;
   height: 36px;
-  background: #193a30;
+  background: #26311d;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #68ddb4;
+  color: #b4ff29;
 }
 .operator small {
   display: block;
@@ -278,7 +278,7 @@ b {
   flex-shrink: 0;
 }
 .eyebrow {
-  color: #7ccdaf;
+  color: #b4ff29;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.5px;
@@ -308,8 +308,8 @@ b {
 .stat-icon {
   width: 40px;
   height: 40px;
-  background: #19392f;
-  color: #68ddb4;
+  background: #26311d;
+  color: #b4ff29;
   border-radius: 11px;
   display: grid;
   place-items: center;
@@ -317,8 +317,8 @@ b {
 }
 .hero-panel {
   margin: 26px 0 32px;
-  background: linear-gradient(110deg, #16392f, #142a26);
-  border: 1px solid #2c4b3f;
+  background: linear-gradient(110deg, #202934, #171d25);
+  border: 1px solid #303946;
   border-radius: 18px;
   padding: 32px;
   display: flex;
@@ -337,7 +337,7 @@ b {
 .hero-icon {
   height: 180px;
   width: 240px;
-  color: #295644;
+  color: #384534;
   stroke-width: 1.1;
   transform: rotate(-25deg);
   margin-right: 35px;
@@ -356,7 +356,7 @@ b {
 .text-button {
   padding: 4px;
   background: none;
-  color: #79d7ad;
+  color: #b4ff29;
   font-size: 12px;
 }
 .routine-grid {
@@ -385,14 +385,14 @@ b {
 .category {
   font-size: 10px;
   padding: 6px 9px;
-  background: #1a392f;
-  color: #83d7b2;
+  background: #26311d;
+  color: #b4ff29;
   border-radius: 6px;
   font-weight: 700;
 }
 .routine-meta {
   font-size: 12px;
-  color: #71877e;
+  color: #98a3b3;
 }
 .card-days {
   display: flex;
@@ -401,27 +401,27 @@ b {
 }
 .card-days span {
   font-size: 9px;
-  background: #1c2927;
-  color: #a1aaa6;
+  background: #202934;
+  color: #8f9bad;
   padding: 6px;
   border-radius: 5px;
 }
 .card-days .selected,
 .day-picker .selected {
-  background: #184e39;
-  color: #8cf2c7;
+  background: #26311d;
+  color: #b4ff29;
 }
 .secondary {
   background: var(--surface);
-  border: 1px solid #30443d;
-  color: #b2c8bc;
+  border: 1px solid #303946;
+  color: #c0c8d5;
   font-size: 12px;
 }
 .status {
   font-size: 10px;
   border-radius: 20px;
-  background: #25312d;
-  color: #87948e;
+  background: #252e3a;
+  color: #9ba6b7;
   padding: 6px 9px;
   display: inline-flex;
   align-items: center;
@@ -429,8 +429,8 @@ b {
   white-space: nowrap;
 }
 .status.published {
-  background: #173e2e;
-  color: #7be3b3;
+  background: #26311d;
+  color: #b4ff29;
 }
 .toolbar {
   display: flex;
@@ -458,7 +458,7 @@ b {
 }
 .search svg {
   flex-shrink: 0;
-  color: #92a39a;
+  color: #98a4b6;
 }
 .toolbar .search {
   flex: 1;
@@ -486,12 +486,12 @@ th {
   text-align: left;
   font-weight: 500;
   font-size: 11px;
-  color: #819389;
-  background: #101a1b;
+  color: #929eaf;
+  background: #141b23;
   padding: 16px 22px;
 }
 td {
-  border-top: 1px solid #23332d;
+  border-top: 1px solid #27313e;
   padding: 19px 22px;
   font-size: 12px;
 }
@@ -505,26 +505,26 @@ td small {
 }
 .icon-button {
   background: none;
-  color: #82968b;
+  color: #98a5b7;
   padding: 8px;
-  border: 1px solid #304139;
+  border: 1px solid #303946;
   border-radius: 8px;
 }
 .video-tag {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #3b9072;
+  color: #b4ff29;
   font-size: 11px;
 }
 .muted {
-  color: #95a29b;
+  color: #99a5b5;
 }
 .empty {
   padding: 48px 30px;
   text-align: center;
-  color: #8a9b92;
-  border: 1px dashed #30483b;
+  color: #99a5b5;
+  border: 1px dashed #303946;
   background: var(--surface);
   border-radius: 14px;
   line-height: 1.7;
@@ -546,13 +546,13 @@ td small {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #8ae2b8;
-  background: #15382c;
+  color: #c1f78b;
+  background: #26311d;
 }
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: #0d24267a;
+  background: #05090dc4;
   backdrop-filter: blur(3px);
   display: flex;
   justify-content: flex-end;
@@ -564,7 +564,7 @@ td small {
   height: 100%;
   background: var(--surface);
   overflow: auto;
-  box-shadow: -10px 0 70px #0c302a20;
+  box-shadow: -10px 0 70px #00000050;
 }
 .editor > header {
   padding: 25px 28px;
@@ -605,9 +605,9 @@ td small {
   padding-top: 20px;
 }
 .toggle {
-  background: #192c24;
+  background: #202934;
   padding: 16px;
-  border: 1px solid #2b4435;
+  border: 1px solid #303946;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -627,7 +627,7 @@ td small {
   max-height: 230px;
   border-radius: 12px;
   margin-bottom: 20px;
-  background: #102620;
+  background: #10161d;
 }
 .day-picker {
   display: flex;
@@ -636,14 +636,14 @@ td small {
   flex-wrap: wrap;
 }
 .day-picker button {
-  background: #202f28;
-  color: #87988e;
+  background: #202934;
+  color: #98a4b4;
   padding: 10px 13px;
   font-size: 12px;
 }
 .routine-step {
   padding: 16px;
-  background: #17251f;
+  background: #1c242f;
   border: 1px solid var(--line);
   border-radius: 10px;
   margin-bottom: 14px;
@@ -666,8 +666,8 @@ td small {
   margin: 0;
 }
 .add-exercise {
-  border: 1px dashed #355440;
-  background: #142c20;
+  border: 1px dashed #3b4859;
+  background: #171f29;
   border-radius: 10px;
   padding: 14px;
   display: grid;
@@ -679,13 +679,13 @@ td small {
   display: grid;
   place-items: center;
   background:
-    radial-gradient(ellipse at top, #143b30, transparent 65%), #0b1213;
+    radial-gradient(ellipse at top, #202c21, transparent 65%), #0b1015;
   padding: 25px;
 }
 .login-card {
   width: 440px;
   max-width: 100%;
-  border: 1px solid #2c4136;
+  border: 1px solid #303946;
   border-radius: 22px;
   background: var(--surface);
   padding: 40px;
@@ -826,11 +826,20 @@ td small {
 }
 
 .demo-banner {
-  border: 1px solid #28573f;
-  color: #8ce6b9;
-  background: #143123;
+  border: 1px solid #303946;
+  color: #c0cad8;
+  background: #202934;
   padding: 10px 15px;
   margin-bottom: 22px;
   border-radius: 10px;
   font-size: 12px;
+}
+
+/* Mobile charcoal and lime palette. */
+.brand i {
+  background: var(--green);
+  color: var(--bg);
+}
+nav button.active {
+  box-shadow: inset 0 0 0 1px #b4ff2955;
 }
