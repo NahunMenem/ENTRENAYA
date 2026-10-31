@@ -4,6 +4,7 @@ import '../../core/widgets.dart';
 import '../training/workout_screen.dart';
 import 'routine.dart';
 import 'routine_editor.dart';
+import 'published_routines.dart';
 
 class RoutinesScreen extends StatefulWidget {
   const RoutinesScreen({super.key});
@@ -72,6 +73,14 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
     }
   }
 
+  Future<void> _explore() async {
+    final routine = await Navigator.push<TrainingRoutine>(
+      context,
+      MaterialPageRoute(builder: (_) => const PublishedRoutines()),
+    );
+    if (mounted && routine != null) await _save([..._routines, routine]);
+  }
+
   Future<void> _delete(TrainingRoutine routine) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -116,6 +125,12 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
           onPressed: _loading || _saving || _failed ? null : _edit,
         ),
         const SizedBox(height: 14),
+        OutlinedButton.icon(
+          onPressed: _loading || _saving || _failed ? null : _explore,
+          icon: const Icon(Icons.explore_outlined),
+          label: const Text('Explorar rutinas de EntrenaYa'),
+        ),
+        const SizedBox(height: 10),
         Wrap(
           spacing: 6,
           children: [

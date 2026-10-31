@@ -56,6 +56,8 @@ Entrenar esta rutina abre el registro de series con los ejercicios, el orden y l
 
 ## Videos de técnica
 
+El panel Next.js se encuentra en `../admin`. Su catálogo publicado se consulta con `GET /api/v1/exercises` y `GET /api/v1/routines`. En Entrenar → Explorar rutinas de EntrenaYa se puede filtrar por categoría y usar una copia de una rutina publicada; la copia personal se puede editar sin cambiar el catálogo. Cuando hay conexión, la biblioteca del servidor reemplaza el listado de respaldo para respetar el estado de publicación.
+
 La app consulta `GET /api/v1/exercises` para obtener el `video_url` de cada ejercicio y lo reproduce dentro de la app con controles de reproducción y avance. El backend prepara una tabla `exercises` con identificador, nombre y URL de video. El futuro panel administrador deberá guardar en ella una URL HTTPS de reproducción directa (por ejemplo, MP4 alojado en almacenamiento de archivos), no un enlace a una página de YouTube. Los identificadores del catálogo deben mantenerse estables para conservar el historial de cada ejercicio.
 
 Si no hay un video asociado, la app informa que todavía no está disponible. El panel de carga, la subida de archivos y los permisos de administrador se implementarán después.

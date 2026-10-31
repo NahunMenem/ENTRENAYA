@@ -63,6 +63,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   late final _preferences = SharedPreferencesAsync();
   late final List<List<_Series>> _series;
   final _videos = <String, String>{};
+  final _technique = <String, String>{};
   List<dynamic> _history = [];
   DateTime _started = DateTime.now();
   DateTime? _restUntil;
@@ -141,7 +142,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       setState(() {
         _catalogUnavailable = false;
         _videos.clear();
+        _technique.clear();
         for (final item in items.cast<Map<String, dynamic>>()) {
+          final instructions = item['instructions'] as String?;
+          if (instructions != null && instructions.trim().isNotEmpty) {
+            _technique[item['id'] as String] = instructions;
+          }
           final url = item['video_url'] as String?;
           final uri = url == null ? null : Uri.tryParse(url);
           if (uri != null && uri.scheme == 'https' && uri.host.isNotEmpty) {
@@ -674,6 +680,25 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                         ),
                       ),
                     ),
+                    if (_technique.containsKey(_catalog[_exercise].$1))
+                      TextButton.icon(
+                        onPressed: () => showModalBottomSheet<void>(
+                          context: context,
+                          isScrollControlled: true,
+                          builder: (context) => SafeArea(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: SingleChildScrollView(
+                                child: Text(
+                                  _technique[_catalog[_exercise].$1]!,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        icon: const Icon(Icons.info_outline),
+                        label: const Text('Ver indicaciones de técnica'),
+                      ),
                     const Text(
                       'Cargá el peso y las repeticiones de la serie actual. Después guardala para iniciar el descanso.',
                       style: TextStyle(color: AppColors.muted, fontSize: 13),

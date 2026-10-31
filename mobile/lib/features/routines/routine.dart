@@ -46,15 +46,18 @@ Future<List<LibraryExercise>> loadExerciseLibrary() async {
         .get(Uri.parse('$api/api/v1/exercises'))
         .timeout(const Duration(seconds: 10));
     if (response.statusCode == 200) {
+      // The server is authoritative: unpublished exercises must disappear online.
+      final published = <String, LibraryExercise>{};
       for (final row
           in (jsonDecode(response.body) as List).cast<Map<String, dynamic>>()) {
         final id = row['id'] as String;
-        items[id] = LibraryExercise(
+        published[id] = LibraryExercise(
           id,
           row['name'] as String,
-          items[id]?.group ?? 'Otros',
+          row['muscle_group'] as String? ?? items[id]?.group ?? 'Otros',
         );
       }
+      return published.values.toList();
     }
   } catch (_) {
     // The bundled library remains available offline.

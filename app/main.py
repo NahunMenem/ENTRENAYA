@@ -14,6 +14,8 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await create_db_and_tables()
+    from app.services.catalog import seed_catalog
+    await seed_catalog()
     yield
     await close_database()
 
