@@ -36,7 +36,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def create_db_and_tables() -> None:
     # Import models so SQLAlchemy registers their tables on Base.metadata.
-    from app.models import catalog, exercise, user  # noqa: F401
+    from app.models import catalog, exercise, exercise_cover, user  # noqa: F401
     from app.db.base import Base
 
     for attempt in range(1, 6):

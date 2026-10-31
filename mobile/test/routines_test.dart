@@ -37,6 +37,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sentadilla'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Agregar a mi rutina'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Guardar rutina'));
     await tester.pumpAndSettle();
     final saved = (await RoutineRepository().load()).single;

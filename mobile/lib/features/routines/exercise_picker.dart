@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import 'routine.dart';
+import 'exercise_detail.dart';
 
 class ExercisePicker extends StatefulWidget {
   const ExercisePicker({super.key, this.excluded = const {}});
@@ -88,15 +89,44 @@ class _ExercisePickerState extends State<ExercisePicker> {
                       return ListTile(
                         title: Text(exercise.name),
                         subtitle: Text(exercise.group),
-                        leading: const Icon(
-                          Icons.fitness_center,
-                          color: AppColors.lime,
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: SizedBox(
+                            width: 56,
+                            height: 56,
+                            child: exercise.coverUrl == null
+                                ? const Icon(
+                                    Icons.fitness_center,
+                                    color: AppColors.lime,
+                                  )
+                                : Image.network(
+                                    exercise.coverUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, error, trace) =>
+                                        const Icon(
+                                          Icons.image_not_supported_outlined,
+                                          color: AppColors.muted,
+                                        ),
+                                  ),
+                          ),
                         ),
                         trailing: Icon(
                           added ? Icons.check_circle : Icons.add_circle_outline,
                         ),
                         enabled: !added,
-                        onTap: () => Navigator.pop(context, exercise),
+                        onTap: () async {
+                          final selected =
+                              await Navigator.push<LibraryExercise>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ExerciseDetail(exercise: exercise),
+                                ),
+                              );
+                          if (context.mounted && selected != null) {
+                            Navigator.pop(context, selected);
+                          }
+                        },
                       );
                     },
                   ),

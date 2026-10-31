@@ -1,4 +1,5 @@
 from secrets import compare_digest
+import asyncio
 from typing import Literal
 from uuid import uuid4
 
@@ -11,6 +12,8 @@ from app.core.config import get_settings
 from app.db.session import get_db
 from app.models.exercise import Exercise
 from app.models.catalog import ExerciseInfo, RoutineTemplate
+from app.models.exercise_cover import ExerciseCover
+from app.services.exercise_cover import process_cover, upload_cover
 
 
 def require_admin(x_admin_key: str = Header(default="")) -> None:
@@ -31,6 +34,8 @@ class ExerciseInput(BaseModel):
     equipment: str = Field(default="", max_length=120)
     instructions: str = Field(default="", max_length=10000)
     video_url: HttpUrl | None = None
+    cover_image: str | None = Field(default=None, max_length=5_600_000)
+    remove_cover: bool = False
     published: bool = False
 
     @field_validator("name", "muscle_group")
@@ -74,19 +79,21 @@ class TemplateInput(BaseModel):
         return self
 
 
-def exercise_data(exercise: Exercise, info: ExerciseInfo | None) -> dict:
+def exercise_data(exercise: Exercise, info: ExerciseInfo | None, cover_url: str | None = None) -> dict:
     return dict(id=exercise.id, name=exercise.name, video_url=exercise.video_url,
         muscle_group=info.muscle_group if info else "Otros", equipment=info.equipment if info else "",
-        instructions=info.instructions if info else "", published=info.published if info else True)
+        instructions=info.instructions if info else "", published=info.published if info else True,
+        cover_url=cover_url)
 
 
 @router.get("/exercises")
 async def exercises(db: AsyncSession = Depends(get_db)) -> list[dict]:
-    rows = (await db.execute(select(Exercise, ExerciseInfo).outerjoin(ExerciseInfo).order_by(Exercise.name))).all()
-    return [exercise_data(row, info) for row, info in rows]
+    rows = (await db.execute(select(Exercise, ExerciseInfo, ExerciseCover.url).outerjoin(ExerciseInfo).outerjoin(ExerciseCover).order_by(Exercise.name))).all()
+    return [exercise_data(row, info, url) for row, info, url in rows]
 
 
 async def save_exercise(data: ExerciseInput, db: AsyncSession, exercise_id: str | None = None) -> dict:
+    processed = await asyncio.to_thread(process_cover, data.cover_image) if data.cover_image else None
     row = await db.get(Exercise, exercise_id) if exercise_id else Exercise(id=str(uuid4()))
     if row is None:
         raise HTTPException(404, "Ejercicio no encontrado.")
@@ -102,8 +109,17 @@ async def save_exercise(data: ExerciseInput, db: AsyncSession, exercise_id: str 
     db.add(row)
     await db.flush()
     db.add(info)
+    cover = await db.get(ExerciseCover, row.id) if exercise_id else None
+    if data.remove_cover and not processed and cover is not None:
+        await db.delete(cover)
+        cover = None
+    if processed:
+        url, public_id = await asyncio.to_thread(upload_cover, processed[0], row.id)
+        cover = cover or ExerciseCover(id=row.id)
+        cover.url, cover.public_id, cover.checksum = url, public_id, processed[1]
+        db.add(cover)
     await db.commit()
-    return exercise_data(row, info)
+    return exercise_data(row, info, cover.url if cover else None)
 
 
 @router.post("/exercises", status_code=201)

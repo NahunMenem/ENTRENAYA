@@ -73,6 +73,67 @@ class CatalogTests(unittest.IsolatedAsyncioTestCase):
             exercises=[dict(id="unknown", sets=0, reps=12, rest_seconds=90)])
         self.assertEqual((await self.client.post("/api/v1/admin/routines", json=template, headers=self.headers)).status_code, 422)
 
+    async def test_exercise_cover_upload_replace_remove_and_permissions(self):
+        import base64
+        import hashlib
+        import io
+        from unittest.mock import patch
+        from PIL import Image
+        def image(color):
+            output = io.BytesIO()
+            Image.new("RGB", (32, 24), color).save(output, format="PNG")
+            return "data:image/png;base64," + base64.b64encode(output.getvalue()).decode()
+        uploaded = []
+        def fake_upload(content, exercise_id):
+            with Image.open(io.BytesIO(content)) as photo:
+                self.assertEqual(photo.format, 'WEBP')
+                self.assertEqual(photo.size, (32, 24))
+            digest = hashlib.sha256(content).hexdigest()
+            url = f'https://res.cloudinary.com/test/image/upload/{digest}.webp'
+            uploaded.append(url)
+            return url, f'entrenaya/exercises/{exercise_id}/{digest}'
+        with patch('app.api.v1.catalog_admin.upload_cover', side_effect=fake_upload) as upload:
+            body = dict(name="Ejercicio con portada", muscle_group="Pecho", published=True, cover_image=image("red"))
+            response = await self.client.post('/api/v1/admin/exercises', json=body, headers=self.headers)
+            self.assertEqual(response.status_code, 201, response.text)
+            exercise_id = response.json()['id']
+            first_url = response.json()['cover_url']
+            self.assertEqual(first_url, uploaded[-1])
+            route = f'/api/v1/exercises/{exercise_id}/cover'
+            photo = await self.client.get(route)
+            self.assertEqual(photo.status_code, 302)
+            self.assertEqual(photo.headers['location'], first_url)
+            self.assertEqual((await self.client.get(route, headers={'If-None-Match': photo.headers['etag']})).status_code, 304)
+            body.pop('cover_image')
+            preserved = await self.client.put(f'/api/v1/admin/exercises/{exercise_id}', json=body, headers=self.headers)
+            self.assertEqual(preserved.json()['cover_url'], first_url)
+            body['cover_image'] = image('blue')
+            replaced = await self.client.put(f'/api/v1/admin/exercises/{exercise_id}', json=body, headers=self.headers)
+            self.assertNotEqual(replaced.json()['cover_url'], first_url)
+            current_url = replaced.json()['cover_url']
+            from fastapi import HTTPException
+            upload.side_effect = HTTPException(503, 'Cloudinary no permite subir imágenes.')
+            failed_body = {**body, 'name': 'Cambio que no debe persistir'}
+            failed = await self.client.put(f'/api/v1/admin/exercises/{exercise_id}', json=failed_body, headers=self.headers)
+            self.assertEqual(failed.status_code, 503)
+            listing = (await self.client.get('/api/v1/admin/exercises', headers=self.headers)).json()
+            self.assertEqual(listing[0]['name'], body['name'])
+            self.assertEqual(listing[0]['cover_url'], current_url)
+            upload.side_effect = fake_upload
+            body.pop('cover_image')
+            body['published'] = False
+            await self.client.put(f'/api/v1/admin/exercises/{exercise_id}', json=body, headers=self.headers)
+            self.assertEqual((await self.client.get(route)).status_code, 404)
+            private_photo = await self.client.get(route, headers=self.headers)
+            self.assertEqual(private_photo.status_code, 302)
+            self.assertIn('private', private_photo.headers['cache-control'])
+            body['remove_cover'] = True
+            removed = await self.client.put(f'/api/v1/admin/exercises/{exercise_id}', json=body, headers=self.headers)
+            self.assertIsNone(removed.json()['cover_url'])
+            self.assertEqual((await self.client.get(route, headers=self.headers)).status_code, 404)
+            body['cover_image'] = 'data:image/png;base64,bm90LWFuLWltYWdl'
+            self.assertEqual((await self.client.put(f'/api/v1/admin/exercises/{exercise_id}', json=body, headers=self.headers)).status_code, 422)
+
     async def test_seed_is_idempotent(self):
         from unittest.mock import patch
         from app.services.catalog import seed_catalog

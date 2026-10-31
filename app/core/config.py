@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     environment: str = "development"
     google_client_id: str | None = None
     admin_api_key: SecretStr | None = None
+    cloudinary_cloud_name: str = ""
+    cloudinary_api_key: str = ""
+    cloudinary_api_secret: SecretStr | None = None
     database_url: str
     jwt_secret_key: SecretStr
     access_token_expire_minutes: int = 60

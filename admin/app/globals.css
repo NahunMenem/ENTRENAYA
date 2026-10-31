@@ -843,3 +843,38 @@ td small {
 nav button.active {
   box-shadow: inset 0 0 0 1px #b4ff2955;
 }
+.exercise-thumb {
+  width: 66px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  float: left;
+  margin-right: 12px;
+}
+.cover-preview {
+  position: relative;
+  margin: 0 0 16px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.cover-preview > img {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  display: block;
+}
+.cover-play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--green);
+  pointer-events: none;
+  background: #00000020;
+}
+.cover-play svg {
+  box-sizing: content-box;
+  padding: 17px;
+  background: #0b1015c9;
+  border-radius: 50%;
+}

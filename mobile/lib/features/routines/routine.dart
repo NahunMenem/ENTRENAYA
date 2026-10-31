@@ -4,10 +4,22 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LibraryExercise {
-  const LibraryExercise(this.id, this.name, this.group);
+  const LibraryExercise(
+    this.id,
+    this.name,
+    this.group, {
+    this.coverUrl,
+    this.videoUrl,
+    this.instructions = '',
+    this.equipment = '',
+  });
   final String id;
   final String name;
   final String group;
+  final String? coverUrl;
+  final String? videoUrl;
+  final String instructions;
+  final String equipment;
 }
 
 const exerciseLibrary = [
@@ -55,6 +67,12 @@ Future<List<LibraryExercise>> loadExerciseLibrary() async {
           id,
           row['name'] as String,
           row['muscle_group'] as String? ?? items[id]?.group ?? 'Otros',
+          coverUrl: row['cover_url'] == null
+              ? null
+              : Uri.parse(api).resolve(row['cover_url'] as String).toString(),
+          videoUrl: row['video_url'] as String?,
+          instructions: row['instructions'] as String? ?? '',
+          equipment: row['equipment'] as String? ?? '',
         );
       }
       return published.values.toList();

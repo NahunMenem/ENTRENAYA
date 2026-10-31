@@ -13,6 +13,7 @@ import {
   LogOut,
   Pencil,
   Plus,
+  Play,
   Search,
   Trash2,
   Video,
@@ -26,6 +27,9 @@ type Exercise = {
   equipment: string;
   instructions: string;
   video_url: string | null;
+  cover_url?: string | null;
+  cover_image?: string | null;
+  remove_cover?: boolean;
   published: boolean;
 };
 type Step = {
@@ -443,6 +447,13 @@ export default function Dashboard({
                       {visibleExercises.map((e) => (
                         <tr key={e.id}>
                           <td>
+                            {e.cover_url && (
+                              <img
+                                className="exercise-thumb"
+                                src={e.cover_url}
+                                alt=""
+                              />
+                            )}
                             <strong>{e.name}</strong>
                             <small>
                               {e.equipment || "Sin equipamiento indicado"}
@@ -616,6 +627,83 @@ export default function Dashboard({
                         />
                       </label>
                     </div>
+                    <label>
+                      Foto de portada
+                      <input
+                        type="file"
+                        key={`${exercise.id}-${exercise.remove_cover ? "removed" : "active"}`}
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 4 * 1024 * 1024) {
+                            setError("La foto debe pesar hasta 4 MB.");
+                            event.target.value = "";
+                            return;
+                          }
+                          const id = exercise.id;
+                          try {
+                            const data = await new Promise<string>(
+                              (resolve, reject) => {
+                                const reader = new FileReader();
+                                reader.onload = () =>
+                                  resolve(String(reader.result));
+                                reader.onerror = reject;
+                                reader.readAsDataURL(file);
+                              },
+                            );
+                            setExercise((current) =>
+                              current?.id === id
+                                ? {
+                                    ...current,
+                                    cover_image: data,
+                                    remove_cover: false,
+                                  }
+                                : current,
+                            );
+                            setError("");
+                          } catch {
+                            setError(
+                              "No pudimos abrir la foto. Probá con otra imagen.",
+                            );
+                          }
+                        }}
+                      />
+                      <small>
+                        Elegí una foto JPG, PNG o WebP de hasta 4 MB. Se guarda
+                        al tocar Guardar cambios.
+                      </small>
+                    </label>
+                    {(exercise.cover_image ||
+                      (exercise.cover_url && !exercise.remove_cover)) && (
+                      <div className="cover-preview">
+                        <img
+                          src={exercise.cover_image || exercise.cover_url!}
+                          alt={`Portada de ${exercise.name || "ejercicio"}`}
+                        />
+                        {exercise.video_url && (
+                          <span className="cover-play">
+                            <Play size={28} />
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {(exercise.cover_image || exercise.cover_url) &&
+                      !exercise.remove_cover && (
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() =>
+                            setExercise({
+                              ...exercise,
+                              cover_image: null,
+                              remove_cover: true,
+                            })
+                          }
+                        >
+                          Quitar portada
+                        </button>
+                      )}
                     <label>
                       Cómo realizarlo
                       <textarea

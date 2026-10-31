@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/app_theme.dart';
 import '../../core/widgets.dart';
 import 'exercise_video.dart';
+import 'exercise_cover.dart';
 import '../routines/routine.dart';
 
 class WorkoutScreen extends StatefulWidget {
@@ -63,6 +64,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   late final _preferences = SharedPreferencesAsync();
   late final List<List<_Series>> _series;
   final _videos = <String, String>{};
+  final _covers = <String, String>{};
   final _technique = <String, String>{};
   List<dynamic> _history = [];
   DateTime _started = DateTime.now();
@@ -142,8 +144,15 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       setState(() {
         _catalogUnavailable = false;
         _videos.clear();
+        _covers.clear();
         _technique.clear();
         for (final item in items.cast<Map<String, dynamic>>()) {
+          final cover = item['cover_url'] as String?;
+          if (cover != null) {
+            _covers[item['id'] as String] = Uri.parse(
+              _api,
+            ).resolve(cover).toString();
+          }
           final instructions = item['instructions'] as String?;
           if (instructions != null && instructions.trim().isNotEmpty) {
             _technique[item['id'] as String] = instructions;
@@ -668,6 +677,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       _catalog[_exercise].$2,
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
+                    if (_covers.containsKey(_catalog[_exercise].$1)) ...[
+                      const SizedBox(height: 16),
+                      ExerciseCover(
+                        name: _catalog[_exercise].$2,
+                        imageUrl: _covers[_catalog[_exercise].$1],
+                        videoUrl: _videos[_catalog[_exercise].$1],
+                      ),
+                    ],
                     Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton.icon(

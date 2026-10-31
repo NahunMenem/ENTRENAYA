@@ -30,4 +30,8 @@ Servicio `ENTRENAYA-MONITOREO` en el mismo proyecto que FastAPI. Root directory 
 
 Para retirar un ejercicio usado en una rutina publicada, primero pasar la rutina a borrador. No se eliminan registros de entrenamiento de los usuarios. Los videos se vinculan por URL de reproducción directa; todavía no hay subida de archivos desde el panel.
 
+Cada ejercicio admite una foto de portada cargada desde el equipo (JPG, PNG o WebP; hasta 4 MB y 20 megapíxeles). La foto se valida, se convierte a WebP de hasta 1600 px y se sube a Cloudinary; PostgreSQL guarda su URL y public_id en `exercise_covers`. Se puede reemplazar o quitar desde el editor. Las referencias de portadas de borradores no se publican en el catálogo de la app. Cloudinary entrega las fotos mediante URL pública. La app usa la portada en la ficha del ejercicio y muestra el botón de reproducción encima cuando hay un video asociado.
+
 Pruebas: `npm run build`, `npm run typecheck`, y desde la raíz `python -m unittest discover -s tests -v` después de instalar `requirements-dev.txt`.
+
+Para subir portadas, configurar CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET en el servicio FastAPI de Railway. La clave de Cloudinary debe permitir la acción de creación/subida de imágenes (una clave de solo lectura no alcanza). Las claves no se incluyen en el navegador ni en Flutter. Quitar una portada la desvincula del ejercicio; no borra archivos históricos de Cloudinary.
