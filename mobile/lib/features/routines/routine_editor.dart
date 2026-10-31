@@ -69,6 +69,8 @@ class _RoutineEditorState extends State<RoutineEditor> {
         name: _name.text.trim(),
         days: _days.toList()..sort(),
         exercises: List.of(_exercises),
+        source: widget.routine?.source,
+        assignedBy: widget.routine?.assignedBy,
       ),
     );
   }

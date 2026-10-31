@@ -30,6 +30,8 @@ Servicio `ENTRENAYA-MONITOREO` en el mismo proyecto que FastAPI. Root directory 
 
 Para retirar un ejercicio usado en una rutina publicada, primero pasar la rutina a borrador. No se eliminan registros de entrenamiento de los usuarios. Los videos se vinculan por URL de reproducción directa; todavía no hay subida de archivos desde el panel.
 
+Las tarjetas de rutinas publicadas incluyen “Copiar código”. El profe puede compartirlo con su alumno para que lo pegue en Inicio → Rutina de mi profe. Se guarda una copia local identificada como compartida por el profesor. Este flujo por código no es una vinculación automática entre cuentas; volver a cargar el código actualiza la copia local de esa rutina.
+
 Cada ejercicio admite una foto de portada cargada desde el equipo (JPG, PNG o WebP; hasta 4 MB y 20 megapíxeles). La foto se valida, se convierte a WebP de hasta 1600 px y se sube a Cloudinary; PostgreSQL guarda su URL y public_id en `exercise_covers`. Se puede reemplazar o quitar desde el editor. Las referencias de portadas de borradores no se publican en el catálogo de la app. Cloudinary entrega las fotos mediante URL pública. La app usa la portada en la ficha del ejercicio y muestra el botón de reproducción encima cuando hay un video asociado.
 
 Pruebas: `npm run build`, `npm run typecheck`, y desde la raíz `python -m unittest discover -s tests -v` después de instalar `requirements-dev.txt`.

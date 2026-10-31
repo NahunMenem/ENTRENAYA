@@ -1054,6 +1054,7 @@ function RoutineCard({
   routine: Routine;
   onEdit: () => void;
 }) {
+  const [copyLabel, setCopyLabel] = useState("Copiar código");
   return (
     <article className="routine-card">
       <div>
@@ -1079,6 +1080,30 @@ function RoutineCard({
         <Pencil size={15} />
         Editar rutina
       </button>
+      {routine.published && (
+        <div className="share-routine">
+          <small>Código para compartir con tu alumno</small>
+          <input
+            aria-label={`Código de ${routine.name}`}
+            readOnly
+            value={routine.id}
+            onFocus={(e) => e.target.select()}
+          />
+          <button
+            className="secondary"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(routine.id);
+                setCopyLabel("Código copiado");
+              } catch {
+                setCopyLabel("Seleccioná y copiá el código de arriba");
+              }
+            }}
+          >
+            {copyLabel}
+          </button>
+        </div>
+      )}
     </article>
   );
 }

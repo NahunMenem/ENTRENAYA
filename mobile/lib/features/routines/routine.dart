@@ -118,21 +118,29 @@ class TrainingRoutine {
     required this.name,
     required this.days,
     required this.exercises,
+    this.source,
+    this.assignedBy,
   });
   final String id;
   final String name;
   final List<int> days;
   final List<RoutineExercise> exercises;
+  final String? source;
+  final String? assignedBy;
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
     'days': days,
     'exercises': exercises.map((e) => e.toJson()).toList(),
+    'source': source,
+    'assigned_by': assignedBy,
   };
   factory TrainingRoutine.fromJson(Map<String, dynamic> row) => TrainingRoutine(
     id: row['id'] as String,
     name: row['name'] as String,
     days: (row['days'] as List).cast<int>(),
+    source: row['source'] as String?,
+    assignedBy: row['assigned_by'] as String?,
     exercises: (row['exercises'] as List)
         .map((e) => RoutineExercise.fromJson(e as Map<String, dynamic>))
         .toList(),

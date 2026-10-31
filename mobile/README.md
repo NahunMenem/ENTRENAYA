@@ -50,6 +50,8 @@ En Progreso → Registrar peso se puede registrar el peso corporal en kilogramos
 
 ## Rutinas personales
 
+El inicio presenta tres accesos directos: Crear mi rutina, Elegir una rutina y Rutina de mi profe. Esta última recibe un código de una rutina publicada desde el monitoreo y conserva el nombre del profesor indicado por el usuario. Las rutinas recibidas se pueden entrenar desde esa sección. Mis rutinas guardadas reúne las rutinas disponibles y el inicio muestra las programadas para el día actual. No se presentan entrenadores asignados ni estadísticas ficticias en el inicio.
+
 En Entrenar → Crear mi rutina podés elegir un nombre y varios días de la semana. La biblioteca incluye ejercicios agrupados por músculo y búsqueda por nombre; se combina con el catálogo del backend cuando hay conexión. Cada ejercicio admite series, repeticiones objetivo y descanso en segundos. Podés cambiar el orden, quitar ejercicios y editar o eliminar rutinas guardadas. El filtro semanal muestra las rutinas asignadas a cada día.
 
 Entrenar esta rutina abre el registro de series con los ejercicios, el orden y los descansos que configuraste. Las repeticiones son un objetivo; las repeticiones y el peso que efectivamente hiciste se ingresan al entrenar. Las rutinas y sus borradores de entrenamiento se guardan localmente en el dispositivo; todavía no se sincronizan con PostgreSQL.

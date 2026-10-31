@@ -1,11 +1,9 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../core/app_theme.dart';
 import '../../core/models.dart';
 import '../../core/widgets.dart';
-import '../training/workout_screen.dart';
+import 'simple_home.dart';
 import '../routines/routines_screen.dart';
 import '../measurements/measurements_screen.dart';
 import '../measurements/measurement.dart';
@@ -22,12 +20,19 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _selectedIndex = 0;
+  int _homeVersion = 0;
+  int _routinesVersion = 0;
 
   @override
   Widget build(BuildContext context) {
     final pages = [
-      _HomeTab(profile: widget.profile, onSelectTab: _selectTab),
-      const RoutinesScreen(),
+      SimpleHome(
+        key: ValueKey('home-$_homeVersion'),
+        profile: widget.profile,
+        onSavedRoutines: () => _selectTab(1),
+        onProgress: () => _selectTab(2),
+      ),
+      RoutinesScreen(key: ValueKey('routines-$_routinesVersion')),
       const _ProgressTab(),
       const _NutritionTab(),
       _ProfileTab(profile: widget.profile, onSignOut: widget.onSignOut),
@@ -49,11 +54,36 @@ class _HomeShellState extends State<HomeShell> {
           ),
           child: Row(
             children: [
-              _NavItem(icon: Icons.home_outlined, label: 'Inicio', selected: _selectedIndex == 0, onTap: () => _selectTab(0)),
-              _NavItem(icon: Icons.fitness_center_rounded, label: 'Entrenar', selected: _selectedIndex == 1, onTap: () => _selectTab(1)),
-              _NavItem(icon: Icons.bar_chart_rounded, label: 'Progreso', selected: _selectedIndex == 2, onTap: () => _selectTab(2)),
-              _NavItem(icon: Icons.restaurant_rounded, label: 'Nutrición', selected: _selectedIndex == 3, onTap: () => _selectTab(3)),
-              _NavItem(icon: Icons.person_outline_rounded, label: 'Perfil', selected: _selectedIndex == 4, onTap: () => _selectTab(4)),
+              _NavItem(
+                icon: Icons.home_outlined,
+                label: 'Inicio',
+                selected: _selectedIndex == 0,
+                onTap: () => _selectTab(0),
+              ),
+              _NavItem(
+                icon: Icons.fitness_center_rounded,
+                label: 'Entrenar',
+                selected: _selectedIndex == 1,
+                onTap: () => _selectTab(1),
+              ),
+              _NavItem(
+                icon: Icons.bar_chart_rounded,
+                label: 'Progreso',
+                selected: _selectedIndex == 2,
+                onTap: () => _selectTab(2),
+              ),
+              _NavItem(
+                icon: Icons.restaurant_rounded,
+                label: 'Nutrición',
+                selected: _selectedIndex == 3,
+                onTap: () => _selectTab(3),
+              ),
+              _NavItem(
+                icon: Icons.person_outline_rounded,
+                label: 'Perfil',
+                selected: _selectedIndex == 4,
+                onTap: () => _selectTab(4),
+              ),
             ],
           ),
         ),
@@ -61,11 +91,20 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
-  void _selectTab(int index) => setState(() => _selectedIndex = index);
+  void _selectTab(int index) => setState(() {
+    _selectedIndex = index;
+    if (index == 0) _homeVersion++;
+    if (index == 1) _routinesVersion++;
+  });
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({required this.icon, required this.label, required this.selected, required this.onTap});
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
@@ -83,7 +122,11 @@ class _NavItem extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 22, color: selected ? AppColors.lime : AppColors.muted),
+              Icon(
+                icon,
+                size: 22,
+                color: selected ? AppColors.lime : AppColors.muted,
+              ),
               const SizedBox(height: 4),
               Text(
                 label,
@@ -95,302 +138,6 @@ class _NavItem extends StatelessWidget {
                   color: selected ? AppColors.lime : AppColors.muted,
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HomeTab extends StatelessWidget {
-  const _HomeTab({required this.profile, required this.onSelectTab});
-  final AthleteProfile profile;
-  final ValueChanged<int> onSelectTab;
-
-  @override
-  Widget build(BuildContext context) {
-    final firstName = profile.name.trim().split(' ').first;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 13, 20, 22),
-      children: [
-        Row(
-          children: [
-            _Avatar(initial: firstName.isEmpty ? 'E' : firstName[0].toUpperCase(), size: 46),
-            const SizedBox(width: 11),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('¡Buen día, $firstName! 👋', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 3),
-                  const Text('Hoy es un gran día para superarte', style: TextStyle(color: AppColors.muted, fontSize: 12)),
-                ],
-              ),
-            ),
-            IconButton.filled(
-              onPressed: () => _showSoon(context, 'Notificaciones'),
-              style: IconButton.styleFrom(backgroundColor: AppColors.surface, foregroundColor: Colors.white),
-              icon: const Icon(Icons.notifications_none_rounded),
-            ),
-          ],
-        ),
-        const SizedBox(height: 19),
-        _WeeklySummary(days: profile.daysPerWeek),
-        const SizedBox(height: 12),
-        _TodayWorkout(onTap: () => _openWorkout(context)),
-        const SizedBox(height: 12),
-        SurfaceCard(
-          padding: const EdgeInsets.all(13),
-          child: Row(
-            children: [
-              const _Avatar(initial: 'L', size: 48, color: Color(0xFF345052)),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('MI ENTRENADOR', style: TextStyle(color: AppColors.lime, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 1)),
-                    SizedBox(height: 3),
-                    Text('Lucas Ferraro', style: TextStyle(fontWeight: FontWeight.w800)),
-                    Text('Fuerza y musculación', style: TextStyle(color: AppColors.muted, fontSize: 12)),
-                  ],
-                ),
-              ),
-              IconButton(onPressed: () => _showSoon(context, 'Entrenadores'), icon: const Icon(Icons.chevron_right_rounded)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 18),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            const Expanded(child: Text('Entrená acompañado', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16))),
-            const Text('Profesionales para vos', style: TextStyle(color: AppColors.muted, fontSize: 9)),
-          ],
-        ),
-        const SizedBox(height: 9),
-        Row(
-          children: [
-            Expanded(child: _ProfessionalShortcut(icon: Icons.fitness_center_rounded, title: 'Buscar entrenador', subtitle: 'Rutinas y seguimiento', onTap: () => _showSoon(context, 'Entrenadores'))),
-            const SizedBox(width: 9),
-            Expanded(child: _ProfessionalShortcut(icon: Icons.spa_rounded, title: 'Buscar nutricionista', subtitle: 'Planes alimentarios', onTap: () => onSelectTab(3))),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            _QuickLink(icon: Icons.bar_chart_rounded, label: 'Progreso', onTap: () => onSelectTab(2)),
-            const SizedBox(width: 8),
-            _QuickLink(icon: Icons.menu_book_rounded, label: 'Rutinas', onTap: () => onSelectTab(1)),
-            const SizedBox(width: 8),
-            _QuickLink(icon: Icons.monitor_weight_outlined, label: 'Peso', onTap: () => onSelectTab(2)),
-            const SizedBox(width: 8),
-            _QuickLink(icon: Icons.restaurant_rounded, label: 'Nutrición', onTap: () => onSelectTab(3)),
-          ],
-        ),
-        const SizedBox(height: 13),
-        InkWell(
-          onTap: () => _showSoon(context, 'EntrenaYa Premium'),
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-            decoration: BoxDecoration(color: AppColors.purple, borderRadius: BorderRadius.circular(18)),
-            child: const Row(
-              children: [
-                Icon(Icons.workspace_premium_rounded, color: AppColors.orange),
-                SizedBox(width: 11),
-                Expanded(child: Text('EntrenaYa Premium · Probá rutinas con IA', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12))),
-                Icon(Icons.chevron_right_rounded, size: 19),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _WeeklySummary extends StatelessWidget {
-  const _WeeklySummary({required this.days});
-  final int days;
-
-  @override
-  Widget build(BuildContext context) {
-    final completed = math.min(3, days);
-    return SurfaceCard(
-      child: Row(
-        children: [
-          SizedBox(
-            width: 74,
-            height: 74,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: completed / days,
-                  strokeWidth: 8,
-                  strokeCap: StrokeCap.round,
-                  backgroundColor: AppColors.surfaceRaised,
-                  color: AppColors.lime,
-                ),
-                Text('$completed/$days', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 17),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Resumen semanal', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 5),
-                Text('$completed de $days entrenamientos', style: const TextStyle(color: AppColors.lime, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 5),
-                const Text('145 min  ·  🔥  7 días de racha', style: TextStyle(color: AppColors.muted, fontSize: 11)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TodayWorkout extends StatelessWidget {
-  const _TodayWorkout({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 230),
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [Color(0xFF104B3D), Color(0xFF142C2A), Color(0xFF151F22)],
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -7,
-            top: 15,
-            child: Icon(Icons.fitness_center_rounded, size: 142, color: Colors.white.withValues(alpha: 0.07)),
-          ),
-          Positioned(
-            right: 21,
-            bottom: 25,
-            child: Icon(Icons.bolt_rounded, size: 100, color: AppColors.lime.withValues(alpha: 0.10)),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(19, 17, 18, 17),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(child: Text('ENTRENAMIENTO DE HOY', style: TextStyle(color: AppColors.lime, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1))),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(color: AppColors.lime.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(20)),
-                      child: const Text('PLAN ACTIVO', style: TextStyle(color: AppColors.lime, fontSize: 8, fontWeight: FontWeight.w800)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 26),
-                const Text('Pecho y tríceps', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 4),
-                const Text('6 ejercicios  ·  50 min', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                const SizedBox(height: 15),
-                SizedBox(
-                  height: 50,
-                  child: FilledButton.icon(
-                    onPressed: onTap,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.lime,
-                      foregroundColor: AppColors.background,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                    icon: const Icon(Icons.play_arrow_rounded),
-                    label: const Text('Comenzar entrenamiento'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProfessionalShortcut extends StatelessWidget {
-  const _ProfessionalShortcut({required this.icon, required this.title, required this.subtitle, required this.onTap});
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        height: 74,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18)),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.lime, size: 19),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10)),
-                  const SizedBox(height: 3),
-                  Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.muted, fontSize: 9)),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.lime, size: 16),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickLink extends StatelessWidget {
-  const _QuickLink({required this.icon, required this.label, required this.onTap});
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          height: 76,
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: AppColors.lime, size: 20),
-              const SizedBox(height: 7),
-              Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
             ],
           ),
         ),
@@ -412,13 +159,19 @@ class _ProgressTabState extends State<_ProgressTab> {
   bool _failed = false;
 
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() {
+    super.initState();
+    _load();
+  }
 
   Future<void> _load() async {
     try {
       final entries = await _repository.load();
       if (!mounted) return;
-      setState(() { _weight = measurementsFor(entries, BodyMeasure.weight); _failed = false; });
+      setState(() {
+        _weight = measurementsFor(entries, BodyMeasure.weight);
+        _failed = false;
+      });
     } catch (_) {
       if (mounted) setState(() => _failed = true);
     } finally {
@@ -427,76 +180,188 @@ class _ProgressTabState extends State<_ProgressTab> {
   }
 
   Future<void> _openWeight() async {
-    await Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const MeasurementsScreen(weightOnly: true)));
+    await Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => const MeasurementsScreen(weightOnly: true),
+      ),
+    );
     if (mounted) await _load();
   }
 
   @override
   Widget build(BuildContext context) {
-    final latest = _weight.isEmpty ? null : _weight.last.values[BodyMeasure.weight]!;
-    final initial = _weight.isEmpty ? null : _weight.first.values[BodyMeasure.weight]!;
+    final latest = _weight.isEmpty
+        ? null
+        : _weight.last.values[BodyMeasure.weight]!;
+    final initial = _weight.isEmpty
+        ? null
+        : _weight.first.values[BodyMeasure.weight]!;
     final change = latest == null || initial == null ? null : latest - initial;
-    return ListView(padding: const EdgeInsets.fromLTRB(20, 18, 20, 25), children: [
-      const SectionHeading(title: 'Mi progreso', subtitle: 'Tu evolución, registro a registro.'),
-      const SizedBox(height: 18),
-      SurfaceCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Peso corporal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 12),
-        if (_loading) const Center(child: CircularProgressIndicator())
-        else if (_failed) ...[
-          const Text('No pudimos leer tu historial de peso.'),
-          TextButton(onPressed: _load, child: const Text('Reintentar')),
-        ] else if (latest == null)
-          const Text('Registrá tu peso para empezar a ver tu evolución.', style: TextStyle(color: AppColors.muted))
-        else ...[
-          Text('${measureNumber(latest)} kg', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.lime)),
-          Text('Último registro: ${measureDate(_weight.last.date)}', style: const TextStyle(color: AppColors.muted, fontSize: 12)),
-          const SizedBox(height: 12),
-          if (_weight.length > 1) ...[
-            Text('${change! > 0 ? '+' : ''}${measureNumber(change)} kg desde el primer registro'),
-            const SizedBox(height: 16),
-            Semantics(label: 'Evolución del peso corporal. Inicial ${measureNumber(initial!)} kilos, actual ${measureNumber(latest)} kilos.',
-              child: SizedBox(height: 140, width: double.infinity,
-                child: CustomPaint(painter: MeasurementTrendChart(_weight, BodyMeasure.weight)))),
-            const SizedBox(height: 8),
-            Wrap(spacing: 20, runSpacing: 4, children: [
-              Text('Inicial: ${measureDate(_weight.first.date)}', style: const TextStyle(color: AppColors.muted, fontSize: 11)),
-              Text('Actual: ${measureDate(_weight.last.date)}', style: const TextStyle(color: AppColors.muted, fontSize: 11)),
-            ]),
-          ] else const Text('Con el próximo registro vas a poder comparar los cambios.', style: TextStyle(color: AppColors.muted, fontSize: 12)),
-        ],
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 25),
+      children: [
+        const SectionHeading(
+          title: 'Mi progreso',
+          subtitle: 'Tu evolución, registro a registro.',
+        ),
         const SizedBox(height: 18),
-        LimeButton(label: 'Registrar peso', icon: Icons.monitor_weight_outlined, onPressed: _openWeight),
-        Center(child: TextButton(onPressed: _openWeight, child: const Text('Ver historial de peso'))),
-      ])),
-      const SizedBox(height: 16),
-      _ProgressTile(icon: Icons.straighten_rounded, title: 'Medidas corporales', detail: 'Brazos, piernas, cintura y espalda · historial y evolución', onTap: () => _openMeasurements(context)),
-      const SizedBox(height: 12),
-      LimeButton(label: 'Registrar medidas', icon: Icons.add_rounded, onPressed: () => _openMeasurements(context)),
-      const SizedBox(height: 16),
-      const Text('Tus registros se guardan en este dispositivo.', style: TextStyle(color: AppColors.muted, fontSize: 11)),
-    ]);
+        SurfaceCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Peso corporal',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 12),
+              if (_loading)
+                const Center(child: CircularProgressIndicator())
+              else if (_failed) ...[
+                const Text('No pudimos leer tu historial de peso.'),
+                TextButton(onPressed: _load, child: const Text('Reintentar')),
+              ] else if (latest == null)
+                const Text(
+                  'Registrá tu peso para empezar a ver tu evolución.',
+                  style: TextStyle(color: AppColors.muted),
+                )
+              else ...[
+                Text(
+                  '${measureNumber(latest)} kg',
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.lime,
+                  ),
+                ),
+                Text(
+                  'Último registro: ${measureDate(_weight.last.date)}',
+                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                if (_weight.length > 1) ...[
+                  Text(
+                    '${change! > 0 ? '+' : ''}${measureNumber(change)} kg desde el primer registro',
+                  ),
+                  const SizedBox(height: 16),
+                  Semantics(
+                    label:
+                        'Evolución del peso corporal. Inicial ${measureNumber(initial!)} kilos, actual ${measureNumber(latest)} kilos.',
+                    child: SizedBox(
+                      height: 140,
+                      width: double.infinity,
+                      child: CustomPaint(
+                        painter: MeasurementTrendChart(
+                          _weight,
+                          BodyMeasure.weight,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 20,
+                    runSpacing: 4,
+                    children: [
+                      Text(
+                        'Inicial: ${measureDate(_weight.first.date)}',
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 11,
+                        ),
+                      ),
+                      Text(
+                        'Actual: ${measureDate(_weight.last.date)}',
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else
+                  const Text(
+                    'Con el próximo registro vas a poder comparar los cambios.',
+                    style: TextStyle(color: AppColors.muted, fontSize: 12),
+                  ),
+              ],
+              const SizedBox(height: 18),
+              LimeButton(
+                label: 'Registrar peso',
+                icon: Icons.monitor_weight_outlined,
+                onPressed: _openWeight,
+              ),
+              Center(
+                child: TextButton(
+                  onPressed: _openWeight,
+                  child: const Text('Ver historial de peso'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _ProgressTile(
+          icon: Icons.straighten_rounded,
+          title: 'Medidas corporales',
+          detail: 'Brazos, piernas, cintura y espalda · historial y evolución',
+          onTap: () => _openMeasurements(context),
+        ),
+        const SizedBox(height: 12),
+        LimeButton(
+          label: 'Registrar medidas',
+          icon: Icons.add_rounded,
+          onPressed: () => _openMeasurements(context),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Tus registros se guardan en este dispositivo.',
+          style: TextStyle(color: AppColors.muted, fontSize: 11),
+        ),
+      ],
+    );
   }
 }
 
 class _ProgressTile extends StatelessWidget {
-  const _ProgressTile({required this.icon, required this.title, required this.detail, this.onTap});
+  const _ProgressTile({
+    required this.icon,
+    required this.title,
+    required this.detail,
+    this.onTap,
+  });
   final IconData icon;
   final String title;
   final String detail;
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: SurfaceCard(
-        padding: const EdgeInsets.all(15),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, color: AppColors.lime, size: 20), const SizedBox(height: 12), Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), const SizedBox(height: 4), Text(detail, style: const TextStyle(color: AppColors.muted, fontSize: 11))]),
-      ));
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(20),
+    child: SurfaceCard(
+      padding: const EdgeInsets.all(15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: AppColors.lime, size: 20),
+          const SizedBox(height: 12),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          Text(
+            detail,
+            style: const TextStyle(color: AppColors.muted, fontSize: 11),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 void _openMeasurements(BuildContext context) {
-  Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const MeasurementsScreen()));
+  Navigator.push(
+    context,
+    MaterialPageRoute<void>(builder: (_) => const MeasurementsScreen()),
+  );
 }
 
 class _NutritionTab extends StatefulWidget {
@@ -513,23 +378,74 @@ class _NutritionTabState extends State<_NutritionTab> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 25),
       children: [
-        const SectionHeading(title: 'Nutrición', subtitle: 'Comé bien, sentite mejor.'),
+        const SectionHeading(
+          title: 'Nutrición',
+          subtitle: 'Comé bien, sentite mejor.',
+        ),
         const SizedBox(height: 17),
         SurfaceCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(crossAxisAlignment: CrossAxisAlignment.end, children: [const Expanded(child: Text('Miércoles, 23 de septiembre', style: TextStyle(color: AppColors.muted, fontSize: 12))), RichText(text: const TextSpan(style: TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w800), children: [TextSpan(text: '1.720'), TextSpan(text: ' / 2.200 kcal', style: TextStyle(color: AppColors.muted, fontSize: 12, fontWeight: FontWeight.w500))]))]),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Miércoles, 23 de septiembre',
+                      style: TextStyle(color: AppColors.muted, fontSize: 12),
+                    ),
+                  ),
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 21,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      children: [
+                        TextSpan(text: '1.720'),
+                        TextSpan(
+                          text: ' / 2.200 kcal',
+                          style: TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 9),
               const ProgressBar(value: 0.78, color: AppColors.lime, height: 10),
               const SizedBox(height: 7),
-              const Text('480 kcal restantes · 78% del objetivo diario', style: TextStyle(color: AppColors.muted, fontSize: 10)),
+              const Text(
+                '480 kcal restantes · 78% del objetivo diario',
+                style: TextStyle(color: AppColors.muted, fontSize: 10),
+              ),
               const SizedBox(height: 19),
-              const _MacroRow(label: 'Proteína', amount: '128 / 160 g', value: 0.8, color: AppColors.lime),
+              const _MacroRow(
+                label: 'Proteína',
+                amount: '128 / 160 g',
+                value: 0.8,
+                color: AppColors.lime,
+              ),
               const SizedBox(height: 12),
-              const _MacroRow(label: 'Carbos', amount: '186 / 240 g', value: 0.77, color: AppColors.blue),
+              const _MacroRow(
+                label: 'Carbos',
+                amount: '186 / 240 g',
+                value: 0.77,
+                color: AppColors.blue,
+              ),
               const SizedBox(height: 12),
-              const _MacroRow(label: 'Grasas', amount: '54 / 70 g', value: 0.77, color: AppColors.orange),
+              const _MacroRow(
+                label: 'Grasas',
+                amount: '54 / 70 g',
+                value: 0.77,
+                color: AppColors.orange,
+              ),
             ],
           ),
         ),
@@ -538,23 +454,109 @@ class _NutritionTabState extends State<_NutritionTab> {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Container(width: 42, height: 42, decoration: BoxDecoration(color: const Color(0xFF1E3440), borderRadius: BorderRadius.circular(13)), child: const Icon(Icons.water_drop_rounded, color: AppColors.blue)),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E3440),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(
+                  Icons.water_drop_rounded,
+                  color: AppColors.blue,
+                ),
+              ),
               const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Agua', style: TextStyle(fontWeight: FontWeight.w800)), Text('${(_waterMl / 1000).toStringAsFixed(1)} / 2,5 L', style: const TextStyle(color: AppColors.muted, fontSize: 12))])),
-              IconButton.filledTonal(onPressed: () => setState(() => _waterMl = (_waterMl + 250).clamp(0, 5000)), icon: const Icon(Icons.add_rounded), style: IconButton.styleFrom(foregroundColor: AppColors.blue, backgroundColor: const Color(0xFF1E3440))),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Agua',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      '${(_waterMl / 1000).toStringAsFixed(1)} / 2,5 L',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton.filledTonal(
+                onPressed: () =>
+                    setState(() => _waterMl = (_waterMl + 250).clamp(0, 5000)),
+                icon: const Icon(Icons.add_rounded),
+                style: IconButton.styleFrom(
+                  foregroundColor: AppColors.blue,
+                  backgroundColor: const Color(0xFF1E3440),
+                ),
+              ),
             ],
           ),
         ),
         const SizedBox(height: 18),
-        Row(children: [const Expanded(child: Text('Comidas de hoy', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17))), TextButton.icon(onPressed: () => _showSoon(context, 'Agregar comida'), icon: const Icon(Icons.add_rounded, size: 18), label: const Text('Agregar'))]),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Comidas de hoy',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () => _showSoon(context, 'Agregar comida'),
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('Agregar'),
+            ),
+          ],
+        ),
         const SizedBox(height: 6),
-        const _MealTile(icon: Icons.wb_sunny_outlined, title: 'Desayuno', detail: 'Avena, yogur y fruta', calories: '420 kcal'),
-        const _MealTile(icon: Icons.lunch_dining_outlined, title: 'Almuerzo', detail: 'Pollo, arroz y ensalada', calories: '680 kcal'),
-        const _MealTile(icon: Icons.coffee_outlined, title: 'Merienda', detail: 'Yogur griego y banana', calories: '220 kcal'),
-        const _MealTile(icon: Icons.dinner_dining_outlined, title: 'Cena', detail: 'Pendiente', calories: '—', pending: true),
+        const _MealTile(
+          icon: Icons.wb_sunny_outlined,
+          title: 'Desayuno',
+          detail: 'Avena, yogur y fruta',
+          calories: '420 kcal',
+        ),
+        const _MealTile(
+          icon: Icons.lunch_dining_outlined,
+          title: 'Almuerzo',
+          detail: 'Pollo, arroz y ensalada',
+          calories: '680 kcal',
+        ),
+        const _MealTile(
+          icon: Icons.coffee_outlined,
+          title: 'Merienda',
+          detail: 'Yogur griego y banana',
+          calories: '220 kcal',
+        ),
+        const _MealTile(
+          icon: Icons.dinner_dining_outlined,
+          title: 'Cena',
+          detail: 'Pendiente',
+          calories: '—',
+          pending: true,
+        ),
         const SizedBox(height: 12),
         const SurfaceCard(
-          child: Row(children: [Icon(Icons.tips_and_updates_outlined, color: AppColors.lime), SizedBox(width: 11), Expanded(child: Text('Priorizá alimentos frescos y un plan que puedas sostener.', style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.4)))]),
+          child: Row(
+            children: [
+              Icon(Icons.tips_and_updates_outlined, color: AppColors.lime),
+              SizedBox(width: 11),
+              Expanded(
+                child: Text(
+                  'Priorizá alimentos frescos y un plan que puedas sostener.',
+                  style: TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -562,17 +564,47 @@ class _NutritionTabState extends State<_NutritionTab> {
 }
 
 class _MacroRow extends StatelessWidget {
-  const _MacroRow({required this.label, required this.amount, required this.value, required this.color});
+  const _MacroRow({
+    required this.label,
+    required this.amount,
+    required this.value,
+    required this.color,
+  });
   final String label;
   final String amount;
   final double value;
   final Color color;
   @override
-  Widget build(BuildContext context) => Column(children: [Row(children: [Expanded(child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700))), Text(amount, style: const TextStyle(color: AppColors.muted, fontSize: 10))]), const SizedBox(height: 6), ProgressBar(value: value, color: color, height: 6)]);
+  Widget build(BuildContext context) => Column(
+    children: [
+      Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+          ),
+          Text(
+            amount,
+            style: const TextStyle(color: AppColors.muted, fontSize: 10),
+          ),
+        ],
+      ),
+      const SizedBox(height: 6),
+      ProgressBar(value: value, color: color, height: 6),
+    ],
+  );
 }
 
 class _MealTile extends StatelessWidget {
-  const _MealTile({required this.icon, required this.title, required this.detail, required this.calories, this.pending = false});
+  const _MealTile({
+    required this.icon,
+    required this.title,
+    required this.detail,
+    required this.calories,
+    this.pending = false,
+  });
   final IconData icon;
   final String title;
   final String detail;
@@ -580,12 +612,56 @@ class _MealTile extends StatelessWidget {
   final bool pending;
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: SurfaceCard(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(children: [Container(width: 39, height: 39, decoration: BoxDecoration(color: AppColors.surfaceRaised, borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: pending ? AppColors.muted : AppColors.lime, size: 19)), const SizedBox(width: 11), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)), const SizedBox(height: 3), Text(detail, style: const TextStyle(color: AppColors.muted, fontSize: 10))])), Text(calories, style: TextStyle(color: pending ? AppColors.muted : Colors.white, fontSize: 11, fontWeight: FontWeight.w700))]),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 8),
+    child: SurfaceCard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 39,
+            height: 39,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceRaised,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: pending ? AppColors.muted : AppColors.lime,
+              size: 19,
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  detail,
+                  style: const TextStyle(color: AppColors.muted, fontSize: 10),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            calories,
+            style: TextStyle(
+              color: pending ? AppColors.muted : Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _ProfileTab extends StatelessWidget {
@@ -595,54 +671,150 @@ class _ProfileTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final weight = profile.weightKg == null ? '— kg' : '${profile.weightKg!.toStringAsFixed(1).replaceAll('.', ',')} kg';
+    final weight = profile.weightKg == null
+        ? '— kg'
+        : '${profile.weightKg!.toStringAsFixed(1).replaceAll('.', ',')} kg';
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
       children: [
-        const SectionHeading(title: 'Mi perfil', subtitle: 'Tu espacio, a tu manera.'),
+        const SectionHeading(
+          title: 'Mi perfil',
+          subtitle: 'Tu espacio, a tu manera.',
+        ),
         const SizedBox(height: 18),
         SurfaceCard(
           child: Row(
             children: [
-              _Avatar(initial: profile.name.isEmpty ? 'E' : profile.name[0].toUpperCase(), size: 62, color: const Color(0xFF334328)),
+              _Avatar(
+                initial: profile.name.isEmpty
+                    ? 'E'
+                    : profile.name[0].toUpperCase(),
+                size: 62,
+                color: const Color(0xFF334328),
+              ),
               const SizedBox(width: 14),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(profile.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)), const SizedBox(height: 4), Text('${profile.age == null ? 'Atleta' : '${profile.age} años'} · $weight', style: const TextStyle(color: AppColors.muted, fontSize: 12)), const SizedBox(height: 7), Text('Objetivo: ${profile.goal.toLowerCase()}', style: const TextStyle(color: AppColors.lime, fontSize: 11, fontWeight: FontWeight.w700))])),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      profile.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${profile.age == null ? 'Atleta' : '${profile.age} años'} · $weight',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      'Objetivo: ${profile.goal.toLowerCase()}',
+                      style: const TextStyle(
+                        color: AppColors.lime,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
         const SizedBox(height: 12),
-        const _ProfileRow(icon: Icons.workspace_premium_outlined, title: 'Plan gratuito', subtitle: 'Ver opciones Premium', accent: AppColors.orange),
+        const _ProfileRow(
+          icon: Icons.workspace_premium_outlined,
+          title: 'Plan gratuito',
+          subtitle: 'Ver opciones Premium',
+          accent: AppColors.orange,
+        ),
         const SizedBox(height: 9),
-        const _ProfileRow(icon: Icons.fitness_center_rounded, title: 'Mi entrenador', subtitle: 'Lucas Ferraro'),
+        const _ProfileRow(
+          icon: Icons.fitness_center_rounded,
+          title: 'Mi entrenador',
+          subtitle: 'Lucas Ferraro',
+        ),
         const SizedBox(height: 9),
-        const _ProfileRow(icon: Icons.restaurant_rounded, title: 'Mi nutricionista', subtitle: 'Valentina Rossi'),
+        const _ProfileRow(
+          icon: Icons.restaurant_rounded,
+          title: 'Mi nutricionista',
+          subtitle: 'Valentina Rossi',
+        ),
         const SizedBox(height: 18),
-        const Text('CUENTA', style: TextStyle(color: AppColors.muted, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
+        const Text(
+          'CUENTA',
+          style: TextStyle(
+            color: AppColors.muted,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.1,
+          ),
+        ),
         const SizedBox(height: 8),
-        const _ProfileRow(icon: Icons.notifications_none_rounded, title: 'Notificaciones', subtitle: 'Rutinas, mensajes y recordatorios'),
+        const _ProfileRow(
+          icon: Icons.notifications_none_rounded,
+          title: 'Notificaciones',
+          subtitle: 'Rutinas, mensajes y recordatorios',
+        ),
         const SizedBox(height: 8),
-        const _ProfileRow(icon: Icons.lock_outline_rounded, title: 'Privacidad', subtitle: 'Datos, permisos y seguridad'),
+        const _ProfileRow(
+          icon: Icons.lock_outline_rounded,
+          title: 'Privacidad',
+          subtitle: 'Datos, permisos y seguridad',
+        ),
         const SizedBox(height: 8),
-        const _ProfileRow(icon: Icons.settings_outlined, title: 'Configuración', subtitle: 'Unidades, idioma y preferencias'),
+        const _ProfileRow(
+          icon: Icons.settings_outlined,
+          title: 'Configuración',
+          subtitle: 'Unidades, idioma y preferencias',
+        ),
         const SizedBox(height: 20),
         OutlinedButton.icon(
           onPressed: () => _confirmSignOut(context, onSignOut),
-          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFFF9098), side: const BorderSide(color: Color(0xFF54343A)), minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFFFF9098),
+            side: const BorderSide(color: Color(0xFF54343A)),
+            minimumSize: const Size.fromHeight(52),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
           icon: const Icon(Icons.logout_rounded, size: 18),
-          label: const Text('Cerrar sesión', style: TextStyle(fontWeight: FontWeight.w700)),
+          label: const Text(
+            'Cerrar sesión',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     );
   }
 
-  Future<void> _confirmSignOut(BuildContext context, Future<void> Function() onSignOut) async {
+  Future<void> _confirmSignOut(
+    BuildContext context,
+    Future<void> Function() onSignOut,
+  ) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
         title: const Text('¿Cerrar sesión?'),
         content: const Text('Vas a volver a la pantalla de inicio.'),
-        actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')), FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Cerrar sesión'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
       ),
     );
     if (confirm == true) await onSignOut();
@@ -650,37 +822,84 @@ class _ProfileTab extends StatelessWidget {
 }
 
 class _ProfileRow extends StatelessWidget {
-  const _ProfileRow({required this.icon, required this.title, required this.subtitle, this.accent = AppColors.lime});
+  const _ProfileRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.accent = AppColors.lime,
+  });
   final IconData icon;
   final String title;
   final String subtitle;
   final Color accent;
   @override
   Widget build(BuildContext context) => SurfaceCard(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        child: Row(children: [Icon(icon, color: accent, size: 20), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)), const SizedBox(height: 3), Text(subtitle, style: const TextStyle(color: AppColors.muted, fontSize: 10))])), const Icon(Icons.chevron_right_rounded, color: AppColors.muted, size: 20)]),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+    child: Row(
+      children: [
+        Icon(icon, color: accent, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: const TextStyle(color: AppColors.muted, fontSize: 10),
+              ),
+            ],
+          ),
+        ),
+        const Icon(
+          Icons.chevron_right_rounded,
+          color: AppColors.muted,
+          size: 20,
+        ),
+      ],
+    ),
+  );
 }
 
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.initial, required this.size, this.color = const Color(0xFF2D3942)});
+  const _Avatar({
+    required this.initial,
+    required this.size,
+    this.color = const Color(0xFF2D3942),
+  });
   final String initial;
   final double size;
   final Color color;
   @override
   Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
-        child: Text(initial, style: TextStyle(color: AppColors.lime, fontSize: size * 0.38, fontWeight: FontWeight.w800)),
-      );
-}
-
-void _openWorkout(BuildContext context) {
-  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const WorkoutScreen()));
+    width: size,
+    height: size,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: color,
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+    ),
+    child: Text(
+      initial,
+      style: TextStyle(
+        color: AppColors.lime,
+        fontSize: size * 0.38,
+        fontWeight: FontWeight.w800,
+      ),
+    ),
+  );
 }
 
 void _showSoon(BuildContext context, String feature) {
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$feature: estamos preparando esta función.')));
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('$feature: estamos preparando esta función.')),
+  );
 }

@@ -178,3 +178,11 @@ async def update_template(template_id: str, data: TemplateInput, db: AsyncSessio
 async def published_routines(db: AsyncSession = Depends(get_db)):
     rows = (await db.scalars(select(RoutineTemplate).where(RoutineTemplate.published.is_(True)).order_by(RoutineTemplate.name))).all()
     return [await template_data(row, db) for row in rows]
+
+
+@public_router.get("/routines/{routine_id}")
+async def shared_routine(routine_id: str, db: AsyncSession = Depends(get_db)):
+    row = await db.get(RoutineTemplate, routine_id)
+    if row is None or not row.published:
+        raise HTTPException(404, "Ese código no corresponde a una rutina publicada. Revisalo con tu profe.")
+    return await template_data(row, db)

@@ -50,6 +50,9 @@ class CatalogTests(unittest.IsolatedAsyncioTestCase):
         response = await self.client.post("/api/v1/admin/routines", json=template, headers=self.headers)
         self.assertEqual(response.status_code, 201, response.text)
         routine_id = response.json()["id"]
+        shared = await self.client.get(f'/api/v1/routines/{routine_id}')
+        self.assertEqual(shared.status_code, 200)
+        self.assertEqual(shared.json()['name'], template['name'])
         public = (await self.client.get("/api/v1/routines")).json()
         self.assertEqual(public[0]["exercises"][0]["name"], body["name"])
         body["published"] = False
@@ -57,6 +60,7 @@ class CatalogTests(unittest.IsolatedAsyncioTestCase):
         template["published"] = False
         self.assertEqual((await self.client.put(f"/api/v1/admin/routines/{routine_id}", json=template, headers=self.headers)).status_code, 200)
         self.assertEqual((await self.client.get("/api/v1/routines")).json(), [])
+        self.assertEqual((await self.client.get(f'/api/v1/routines/{routine_id}')).status_code, 404)
         self.assertEqual((await self.client.put(f"/api/v1/admin/exercises/{exercise_id}", json=body, headers=self.headers)).status_code, 200)
         self.assertEqual((await self.client.get("/api/v1/exercises")).json(), [])
         self.assertEqual(len((await self.client.get("/api/v1/admin/exercises", headers=self.headers)).json()), 1)
